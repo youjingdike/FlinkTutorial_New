@@ -1,6 +1,5 @@
 package com.xq.apitest.sinktest;
 
-import akka.stream.impl.io.FileSink;
 import com.xq.apitest.pojo.SensorReading;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.serialization.SimpleStringEncoder;
