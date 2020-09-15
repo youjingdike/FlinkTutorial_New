@@ -8,6 +8,9 @@ import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.filesystem.StreamingFileSink;
+import org.apache.flink.streaming.api.functions.sink.filesystem.bucketassigners.BasePathBucketAssigner;
+import org.apache.flink.streaming.api.functions.sink.filesystem.bucketassigners.DateTimeBucketAssigner;
+import org.apache.flink.streaming.api.functions.sink.filesystem.rollingpolicies.DefaultRollingPolicy;
 
 import java.net.URL;
 
@@ -28,9 +31,26 @@ public class FileSinkTest {
 
         map.print();
 
-        map.addSink(StreamingFileSink.forRowFormat(
-                new Path("D:\\code\\FlinkTutorial_1.10_New\\src\\main\\resources\\out2.txt")
-                ,new SimpleStringEncoder<SensorReading>()).build());
+        StreamingFileSink<SensorReading> sink1 = StreamingFileSink.forRowFormat(
+                new Path("D:\\code\\FlinkTutorial_1.10_New\\src\\main\\resources\\out_1.txt"),
+                new SimpleStringEncoder<SensorReading>("UTF-8")
+        ).withBucketAssigner(new BasePathBucketAssigner<>()).withRollingPolicy(DefaultRollingPolicy.create().build()).build();
+
+        StreamingFileSink<SensorReading> sink2 = StreamingFileSink.forRowFormat(
+                new Path("D:\\code\\FlinkTutorial_1.10_New\\src\\main\\resources\\out_2.txt"),
+                new SimpleStringEncoder<SensorReading>("UTF-8")
+        ).withBucketAssigner(new DateTimeBucketAssigner<>()).withRollingPolicy(DefaultRollingPolicy.create().build()).build();
+
+        StreamingFileSink<SensorReading> sink3 = StreamingFileSink.forRowFormat(
+                new Path("D:\\code\\FlinkTutorial_1.10_New\\src\\main\\resources\\out_3.txt")
+                ,new SimpleStringEncoder<SensorReading>()).build();
+
+        /**
+         * 报错：The writeAsCsv() method can only be used on data streams of tuples.
+         */
+//        map.writeAsCsv("D:\\code\\FlinkTutorial_1.10_New\\src\\main\\resources\\out_4.txt");
+
+//        map.addSink(sink2);
 
         env.execute("file sink test");
 
