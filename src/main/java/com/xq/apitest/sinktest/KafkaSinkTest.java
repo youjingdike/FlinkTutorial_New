@@ -56,6 +56,7 @@ public class KafkaSinkTest {
                 return TypeInformation.of(SensorReading.class);
             }
         }, properties));
+
         // 1. 基本转换操作：map成样例类类型
         SingleOutputStreamOperator<String> dataStream = inputStream.map((MapFunction<SensorReading, String>) value -> {
             return value.toString();
