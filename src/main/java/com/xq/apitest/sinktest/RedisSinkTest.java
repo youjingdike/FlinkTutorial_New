@@ -20,7 +20,7 @@ public class RedisSinkTest {
 
         URL resource = FileSinkTest.class.getResource("/sensor.txt");
         DataStreamSource<String> inputStream = env.readTextFile(resource.getPath().toString());
-        SingleOutputStreamOperator<SensorReading> mapStream = inputStream.map(new MapFunction<String, SensorReading>() {
+        SingleOutputStreamOperator<SensorReading> sensorReadingStream = inputStream.map(new MapFunction<String, SensorReading>() {
             @Override
             public SensorReading map(String value) throws Exception {
                 String[] split = value.split(",");
@@ -33,7 +33,7 @@ public class RedisSinkTest {
                 .setPort(6379)
                 .build();
 
-        mapStream.addSink(new RedisSink<>(jedisPoolConfig, new RedisMapper<SensorReading>() {
+        sensorReadingStream.addSink(new RedisSink<>(jedisPoolConfig, new RedisMapper<SensorReading>() {
             @Override
             public RedisCommandDescription getCommandDescription() {
                 return new RedisCommandDescription(RedisCommand.HSET, "sensor_temp");

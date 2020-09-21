@@ -34,16 +34,21 @@ public class FileSinkTest {
         StreamingFileSink<SensorReading> sink1 = StreamingFileSink.forRowFormat(
                 new Path("D:\\code\\FlinkTutorial_1.10_New\\src\\main\\resources\\out_1.txt"),
                 new SimpleStringEncoder<SensorReading>("UTF-8")
-        ).withBucketAssigner(new BasePathBucketAssigner<>()).withRollingPolicy(DefaultRollingPolicy.create().build()).build();
+        ).withBucketAssigner(new BasePathBucketAssigner<>())
+         .withRollingPolicy(DefaultRollingPolicy.builder().build())
+         .build();
 
         StreamingFileSink<SensorReading> sink2 = StreamingFileSink.forRowFormat(
                 new Path("D:\\code\\FlinkTutorial_1.10_New\\src\\main\\resources\\out_2.txt"),
                 new SimpleStringEncoder<SensorReading>("UTF-8")
-        ).withBucketAssigner(new DateTimeBucketAssigner<>()).withRollingPolicy(DefaultRollingPolicy.create().build()).build();
+        ).withBucketAssigner(new DateTimeBucketAssigner<>())
+         .withRollingPolicy(DefaultRollingPolicy.builder().build())
+         .build();
 
         StreamingFileSink<SensorReading> sink3 = StreamingFileSink.forRowFormat(
                 new Path("D:\\code\\FlinkTutorial_1.10_New\\src\\main\\resources\\out_3.txt")
-                ,new SimpleStringEncoder<SensorReading>()).build();
+                ,new SimpleStringEncoder<SensorReading>()
+        ).build();
 
         /**
          * 报错：The writeAsCsv() method can only be used on data streams of tuples.
