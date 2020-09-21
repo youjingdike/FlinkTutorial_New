@@ -27,6 +27,9 @@ import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class StateTest {
     public static void main(String[] args) throws Exception {
@@ -44,7 +47,8 @@ public class StateTest {
         });
 
         KeyedStream<SensorReading, Tuple> keyedStream = dataStream.keyBy("id");
-        keyedStream.print();
+        SingleOutputStreamOperator<String> mapStream = keyedStream.map(new MyRichMapper());
+        mapStream.print("map stream");
         env.execute("test");
     }
 }
@@ -52,17 +56,17 @@ public class StateTest {
 // Keyed state测试：必须定义在RichFunction中，因为需要运行时上下文
 //定义tuple的TypeInformation方式:TypeInformation.of(new TypeHint<Tuple3<String, Double, Integer>>() {})
 class MyRichMapper extends RichMapFunction<SensorReading, String> {
-    private ValueState<Double> valueState = null;
-    private ListState<Integer> listState = null;
+    private ValueState<Integer> valueState = null;
+    private ListState<Double> listState = null;
     private MapState<String,Double> mapState = null;
     private ReducingState<SensorReading> reducingState = null;
     private AggregatingState<SensorReading,String> aggregatingState = null;
 
     @Override
     public void open(Configuration parameters) throws Exception {
-        valueState = getRuntimeContext().getState(new ValueStateDescriptor<Double>("valueState",Double.class));
-        listState = getRuntimeContext().getListState(new ListStateDescriptor<Integer>("listState", Integer.class));
-        mapState = getRuntimeContext().getMapState(new MapStateDescriptor<String, Double>("mapstate",String.class,Double.class));
+        valueState = getRuntimeContext().getState(new ValueStateDescriptor<Integer>("valueState",Integer.class));
+        listState = getRuntimeContext().getListState(new ListStateDescriptor<Double>("listState", Double.class));
+        mapState = getRuntimeContext().getMapState(new MapStateDescriptor<String, Double>("mapState",String.class,Double.class));
 
 
         reducingState = getRuntimeContext().getReducingState(new ReducingStateDescriptor<SensorReading>("reducingState", new ReduceFunction<SensorReading>() {
@@ -78,30 +82,64 @@ class MyRichMapper extends RichMapFunction<SensorReading, String> {
 
                     @Override
                     public Tuple3<String, Double, Integer> createAccumulator() {
-                        return null;
+                        return new Tuple3<>("",0.0D,0);
                     }
 
                     @Override
                     public Tuple3<String, Double, Integer> add(SensorReading value, Tuple3<String, Double, Integer> accumulator) {
-                        return null;
+                        accumulator.f0 = value.getId();
+                        accumulator.f1 += value.getTemperature();
+                        accumulator.f2 += 1;
+                        return accumulator;
                     }
 
                     @Override
                     public String getResult(Tuple3<String, Double, Integer> accumulator) {
-                        return null;
+                        return accumulator.f0+":"+(accumulator.f1/accumulator.f2);
                     }
 
                     @Override
                     public Tuple3<String, Double, Integer> merge(Tuple3<String, Double, Integer> a, Tuple3<String, Double, Integer> b) {
-                        return null;
+                        return new Tuple3<>(a.f0,a.f1+b.f1,a.f2+b.f2);
                     }
                 },
                 TypeInformation.of(new TypeHint<Tuple3<String, Double, Integer>>() {})));
     }
 
     @Override
-    public String map(SensorReading value) throws Exception {
-        return null;
+    public String map(SensorReading sensorReading1) throws Exception {
+        Integer value1 = valueState.value();
+        if (value1 != null) {
+            System.out.println("valueState:"+sensorReading1.getId()+ "->" + value1.toString());
+            valueState.update(++value1);
+        } else {
+            valueState.update(1);
+            System.out.println("valueState:"+sensorReading1.getId()+ "-> 0");
+        }
+
+        Iterable<Double> integerIterable = listState.get();
+        integerIterable.forEach(integer -> System.out.println("listState:"+integer));
+        listState.add(sensorReading1.getTemperature());
+
+        if (value1!=null&&value1>2) {
+            System.out.println("###");
+            List<Double> list = new ArrayList<>();
+            list.add(1.0D);
+            list.add(1.1D);
+            list.add(1.2D);
+            listState.update(list);
+        }
+
+        Iterable<Map.Entry<String, Double>> entries = mapState.entries();
+        mapState.put(""+sensorReading1.getId(),sensorReading1.getTemperature());
+
+        reducingState.add(sensorReading1);
+        SensorReading sensorReading = reducingState.get();
+        System.out.println(sensorReading1.getId()+":mixTemp:"+sensorReading.getTemperature());
+
+        aggregatingState.add(sensorReading1);
+        aggregatingState.get();
+        return aggregatingState.get();
     }
 
 }

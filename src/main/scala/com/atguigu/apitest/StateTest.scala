@@ -27,7 +27,7 @@ object StateTest {
   def main(args: Array[String]): Unit = {
     val env = StreamExecutionEnvironment.getExecutionEnvironment
     env.setParallelism(1)
-    env.setStateBackend(new FsStateBackend("", true))
+//    env.setStateBackend(new FsStateBackend("", true))
     env.setStateBackend(new RocksDBStateBackend(""))
 
     // 开启checkpoint
@@ -106,12 +106,12 @@ class TempChangeAlert(threshold: Double) extends RichFlatMapFunction[SensorReadi
 // Keyed state测试：必须定义在RichFunction中，因为需要运行时上下文
 class MyRichMapper1 extends RichMapFunction[SensorReading, String]{
   var valueState: ValueState[Double] = _
-  lazy val listState: ListState[Int] = getRuntimeContext.getListState( new ListStateDescriptor[Int]("liststate", classOf[Int]) )
-  lazy val mapState: MapState[String, Double] = getRuntimeContext.getMapState( new MapStateDescriptor[String, Double]("mapstate", classOf[String], classOf[Double]))
-  lazy val reduceState: ReducingState[SensorReading] = getRuntimeContext.getReducingState(new ReducingStateDescriptor[SensorReading]("reducestate", new MyReducer, classOf[SensorReading]))
+  lazy val listState: ListState[Int] = getRuntimeContext.getListState( new ListStateDescriptor[Int]("listState", classOf[Int]) )
+  lazy val mapState: MapState[String, Double] = getRuntimeContext.getMapState( new MapStateDescriptor[String, Double]("mapState", classOf[String], classOf[Double]))
+  lazy val reduceState: ReducingState[SensorReading] = getRuntimeContext.getReducingState(new ReducingStateDescriptor[SensorReading]("reduceState", new MyReducer, classOf[SensorReading]))
 
   override def open(parameters: Configuration): Unit = {
-    valueState = getRuntimeContext.getState( new ValueStateDescriptor[Double]("valuestate", classOf[Double]))
+    valueState = getRuntimeContext.getState( new ValueStateDescriptor[Double]("valueState", classOf[Double]))
   }
 
   override def map(value: SensorReading): String = {
