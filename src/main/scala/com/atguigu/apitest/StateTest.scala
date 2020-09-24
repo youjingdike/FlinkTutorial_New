@@ -65,7 +65,7 @@ object StateTest {
      val alertStream = dataStream
       .keyBy(_.id)
 //      .flatMap( new TempChangeAlert(10.0) )
-      .flatMapWithState[(String, Double, Double), Double] {
+      .flatMapWithState[(String, Double, Double), Double] {//java API没有自带状态的方法
          case (data: SensorReading, None) => ( List.empty, Some(data.temperature) )
          case (data: SensorReading, lastTemp: Some[Double]) => {
            // 跟最新的温度值求差值作比较

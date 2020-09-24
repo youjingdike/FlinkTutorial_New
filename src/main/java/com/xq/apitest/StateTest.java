@@ -5,6 +5,7 @@ import com.xq.apitest.sinktest.FileSinkTest;
 import org.apache.flink.api.common.functions.AggregateFunction;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.functions.ReduceFunction;
+import org.apache.flink.api.common.functions.RichFlatMapFunction;
 import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.api.common.restartstrategy.RestartStrategies;
 import org.apache.flink.api.common.state.AggregatingState;
@@ -23,12 +24,15 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.contrib.streaming.state.RocksDBStateBackend;
+import org.apache.flink.runtime.state.memory.MemoryStateBackend;
 import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.KeyedStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.CheckpointConfig;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.util.Collector;
 
 import java.net.URL;
 import java.util.ArrayList;
@@ -39,7 +43,11 @@ public class StateTest {
     public static void main(String[] args) throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
+        //    env.setStateBackend(new FsStateBackend("", true))
+//        env.setStateBackend(new RocksDBStateBackend("file:////D://checkpoint"));
+        env.setStateBackend(new MemoryStateBackend());
 //        env.enableCheckpointing(60*1000L);//等价于：checkpointConfig.setCheckpointInterval(60*1000L);
+
 
         CheckpointConfig checkpointConfig = env.getCheckpointConfig();
         checkpointConfig.setCheckpointingMode(CheckpointingMode.EXACTLY_ONCE);
@@ -63,10 +71,62 @@ public class StateTest {
             }
         });
 
-        KeyedStream<SensorReading, Tuple> keyedStream = dataStream.keyBy("id");
-        SingleOutputStreamOperator<String> mapStream = keyedStream.map(new MyRichMapper());
+        KeyedStream<SensorReading, Tuple> keyedStream = dataStream
+                .keyBy("id");
+
+//        SingleOutputStreamOperator<String> mapStream = keyedStream
+//                .map(new MyRichMapper())
+//                .uid("myRichMapper");
+
+        // 需求：对于温度传感器温度值跳变，超过10度，报警
+        // 用自定义RichFunction实现状态编程
+        SingleOutputStreamOperator<Tuple3<String, Double, Double>> mapStream = keyedStream
+                .flatMap(new TempChangeAlert(10D))
+                .uid("tempChangeAlert");
         mapStream.print("map stream");
+
+
+
         env.execute("test");
+    }
+}
+
+class TempChangeAlert extends RichFlatMapFunction<SensorReading,Tuple3<String,Double,Double>> {
+
+    private Double threshold;
+    //保存上次的温度
+    private ValueState<Double> lastTempState = null;
+    //保存报警状态
+    private ValueState<Boolean> isFirstTempState = null;
+
+    public TempChangeAlert(Double threshold) {
+        this.threshold = threshold;
+    }
+
+    @Override
+    public void open(Configuration parameters) throws Exception {
+        lastTempState = getRuntimeContext().getState(new ValueStateDescriptor<Double>("lastTempState",Double.class));
+        isFirstTempState = getRuntimeContext().getState(new ValueStateDescriptor<Boolean>("isFirstTempState",Boolean.class));
+    }
+
+    @Override
+    public void flatMap(SensorReading sen, Collector<Tuple3<String, Double, Double>> out) throws Exception {
+        Double lastTemp = lastTempState.value();
+        if (lastTemp==null) {
+            lastTemp = 0D;
+        }
+        //与最新的温度求差作比较
+        double diff = Math.abs(sen.getTemperature() - lastTemp);
+
+        if (isFirstTempState.value() == null) {
+            isFirstTempState.update(true);
+        }
+
+        if (!isFirstTempState.value() && diff > threshold) {
+            out.collect(new Tuple3<>(sen.getId(), lastTemp, sen.getTemperature()));
+        }
+        isFirstTempState.update(false);
+        lastTempState.update(sen.getTemperature());
     }
 }
 
