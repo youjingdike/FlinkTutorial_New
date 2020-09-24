@@ -22,22 +22,22 @@ object ProcessFunctionTest {
     env.setParallelism(1)
 
     // 读取数据
-    val inputStream = env.socketTextStream("localhost", 7777)
-
+//    val inputStream = env.socketTextStream("localhost", 7777)
+    val inputStream = env.readTextFile("D:\\code\\FlinkTutorial_1.10_New\\src\\main\\resources\\sensor.txt");
     // 先转换成样例类类型（简单转换操作）
     val dataStream = inputStream
       .map( data => {
         val arr = data.split(",")
         SensorReading(arr(0), arr(1).toLong, arr(2).toDouble)
       } )
-//      .keyBy(_.id)
-//      .process( new MyKeyedProcessFunction )
-
-    val warningStream = dataStream
       .keyBy(_.id)
-      .process( new TempIncreWarning(10000L) )
-
-    warningStream.print()
+      .process( new MyKeyedProcessFunction )
+    dataStream.print("test keyprofunc")
+//    val warningStream = dataStream
+//      .keyBy(_.id)
+//      .process( new TempIncreWarning(10000L) )
+//
+//    warningStream.print()
 
     env.execute("process function test")
   }
@@ -86,7 +86,7 @@ class MyKeyedProcessFunction extends KeyedProcessFunction[String, SensorReading,
 
   override def processElement(value: SensorReading, ctx: KeyedProcessFunction[String, SensorReading, String]#Context, out: Collector[String]): Unit = {
     ctx.getCurrentKey
-    ctx.timestamp()
+    println(ctx.timestamp())
     ctx.timerService().currentWatermark()
     ctx.timerService().registerEventTimeTimer(ctx.timestamp() + 60000L)
   }
