@@ -2,10 +2,10 @@ package com.xq.apitest;
 
 import com.xq.apitest.pojo.SensorReading;
 import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.common.state.ListState;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.api.java.functions.KeySelector;
-import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
@@ -22,7 +22,7 @@ public class ProcessFunctionTest {
 
         URL resource = ProcessFunctionTest.class.getResource("/sensor.txt");
 //        DataStreamSource<String> inputStream = env.readTextFile(resource.getPath().toString());
-        DataStreamSource<String> inputStream = env.socketTextStream("localhost", 7777);
+        DataStreamSource<String> inputStream = env.socketTextStream("localhost", 9999);
 
         SingleOutputStreamOperator<SensorReading> dataStream = inputStream.map(new MapFunction<String, SensorReading>() {
             @Override
@@ -47,6 +47,31 @@ public class ProcessFunctionTest {
     }
 }
 
+// 实现自定义的KeyedProcessFunction
+class TempIncreWaining extends KeyedProcessFunction<String, SensorReading, String> {
+
+    private Long interval;
+
+    private ValueState<Double> lastTempState = null;
+    private ValueState<Long> timerTsState = null;
+
+    public TempIncreWaining(Long interval) {
+        this.interval = interval;
+    }
+
+
+
+    @Override
+    public void processElement(SensorReading value, Context ctx, Collector<String> out) throws Exception {
+        lastTempState = getRuntimeContext().getState(new ValueStateDescriptor<Double>("lastTempState",Double.class));
+        timerTsState = getRuntimeContext().getState(new ValueStateDescriptor<Long>("timerTsState",Long.class));
+    }
+
+    @Override
+    public void open(Configuration parameters) throws Exception {
+        super.open(parameters);
+    }
+}
 
 // KeyedProcessFunction功能测试
 class MyProFunc extends KeyedProcessFunction<String, SensorReading, String> {
@@ -63,7 +88,7 @@ class MyProFunc extends KeyedProcessFunction<String, SensorReading, String> {
         System.out.println(ctx.timestamp());
         System.out.println(ctx.timerService().currentWatermark());
         System.out.println(ctx.timerService().currentProcessingTime());
-        ctx.timerService().registerProcessingTimeTimer(3000L);
+        ctx.timerService().registerProcessingTimeTimer(ctx.timerService().currentProcessingTime()+5000L);
 //        ctx.timerService().registerProcessingTimeTimer(ctx.timestamp()+6000L);
 //        ctx.timerService().registerEventTimeTimer(ctx.timestamp()+6000L);
     }
