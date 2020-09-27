@@ -1,5 +1,8 @@
-FileSinkTest
-RedisSinkTest
-StateTest
-ProcessFunctionTest
-SideOutputTest
+Example
+TableApiTest
+FileOutputTest
+KafkaPipelineTest
+EsOutputTest
+TimeAndWindowTest
+ScalarFunctionTest
+TableFunctionTest
