@@ -2,7 +2,6 @@ package com.xq.apitest;
 
 import com.xq.apitest.pojo.SensorReading;
 import org.apache.flink.api.common.functions.MapFunction;
-import org.apache.flink.api.common.state.ListState;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.api.java.functions.KeySelector;
@@ -40,7 +39,8 @@ public class ProcessFunctionTest {
                         return value.getId();
                     }
                 })
-                .process(new MyProFunc());
+//                .process(new MyProFunc());
+                .process(new TempIncreWaining(5*1000L));
 
         process.print("process");
         env.execute("test process func");
@@ -53,23 +53,39 @@ class TempIncreWaining extends KeyedProcessFunction<String, SensorReading, Strin
     private Long interval;
 
     private ValueState<Double> lastTempState = null;
+    //定义状态：保存上一个温度值进行比较，保存注册定时器的时间戳用于删除
     private ValueState<Long> timerTsState = null;
 
     public TempIncreWaining(Long interval) {
         this.interval = interval;
     }
 
-
-
     @Override
-    public void processElement(SensorReading value, Context ctx, Collector<String> out) throws Exception {
+    public void open(Configuration parameters) throws Exception {
         lastTempState = getRuntimeContext().getState(new ValueStateDescriptor<Double>("lastTempState",Double.class));
         timerTsState = getRuntimeContext().getState(new ValueStateDescriptor<Long>("timerTsState",Long.class));
     }
 
     @Override
-    public void open(Configuration parameters) throws Exception {
-        super.open(parameters);
+    public void processElement(SensorReading sen, Context ctx, Collector<String> out) throws Exception {
+        Double lastTemp = lastTempState.value();
+        Long timerTs = timerTsState.value();
+        lastTempState.update(sen.getTemperature());
+
+        if (lastTemp!=null && timerTs==null && sen.getTemperature()>lastTemp) {
+            long ts = ctx.timerService().currentProcessingTime() + interval;
+            timerTsState.update(ts);
+            ctx.timerService().registerProcessingTimeTimer(ts);
+        } else if (timerTs != null && lastTemp != null && sen.getTemperature() < lastTemp) {
+            ctx.timerService().deleteProcessingTimeTimer(timerTs);
+            timerTsState.clear();
+        }
+    }
+
+    @Override
+    public void onTimer(long timestamp, OnTimerContext ctx, Collector<String> out) throws Exception {
+        out.collect("传感器" + ctx.getCurrentKey() + "的温度连续" + interval/1000 + "秒连续上升");
+        timerTsState.clear();
     }
 }
 
