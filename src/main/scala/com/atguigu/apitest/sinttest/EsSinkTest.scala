@@ -11,7 +11,7 @@ import org.apache.http.HttpHost
 import org.elasticsearch.client.Requests
 
 /**
-  * Copyright (c) 2018-2028 尚硅谷 All Rights Reserved 
+  * Copyright (c) 2018-2028 hr All Rights Reserved
   *
   * Project: FlinkTutorial
   * Package: com.atguigu.apitest.sinttest

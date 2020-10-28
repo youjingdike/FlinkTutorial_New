@@ -7,7 +7,7 @@ import org.apache.flink.streaming.connectors.redis.common.config.FlinkJedisPoolC
 import org.apache.flink.streaming.connectors.redis.common.mapper.{RedisCommand, RedisCommandDescription, RedisMapper}
 
 /**
-  * Copyright (c) 2018-2028 尚硅谷 All Rights Reserved 
+  * Copyright (c) 2018-2028 hr All Rights Reserved
   *
   * Project: FlinkTutorial
   * Package: com.atguigu.apitest.sinttest

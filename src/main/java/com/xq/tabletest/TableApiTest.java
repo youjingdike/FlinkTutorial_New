@@ -6,6 +6,7 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.java.StreamTableEnvironment;
 import org.apache.flink.types.Row;
@@ -17,36 +18,19 @@ public class TableApiTest {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
 
-        URL resource = TableApiTest.class.getResource("/sensor.txt");
-        DataStreamSource<String> inputStream = env.readTextFile(resource.getPath().toString());
+//        StreamTableEnvironment tableEnv = StreamTableEnvironment.create(env);
 
-        SingleOutputStreamOperator<SensorReading> dataStream = inputStream.map((MapFunction<String, SensorReading>) value -> {
-            String[] split = value.split(",");
-            return new SensorReading(split[0].trim(), Long.parseLong(split[1].trim()), Double.parseDouble(split[2].trim()));
-        });
+        /*URL resource = TableApiTest.class.getResource("/sensor.txt");
+        String filePath = resource.getPath().toString();*/
 
-        StreamTableEnvironment tableEnv = StreamTableEnvironment.create(env);
+        // 1.1 基于老版本planner的流处理
+        EnvironmentSettings settings = EnvironmentSettings.newInstance()
+                .useOldPlanner().build();
+        StreamTableEnvironment oldStreamTableEnv = StreamTableEnvironment.create(env, settings);
 
-        Table table = tableEnv.fromDataStream(dataStream);
+        //1.2 基于新
 
-        // 调用table api进行转换
-        Table filter = table.select("id,temperature").filter("id == 'sensor_1'");
-        filter.printSchema();
-        DataStream<Row> rowDataStream = tableEnv.toAppendStream(filter, Row.class);
-        rowDataStream.print("table");
 
-        tableEnv.createTemporaryView("t1",table);
-        tableEnv.createTemporaryView("t2",dataStream);
-
-        Table res1 = tableEnv.sqlQuery("select id,temperature from t1 where id = 'sensor_1'");
-        Table res2 = tableEnv.sqlQuery("select id,temperature from t2 where id = 'sensor_1'");
-
-        DataStream<Row> rowDataStream1 = tableEnv.toAppendStream(res1, Row.class);
-        DataStream<Row> rowDataStream2 = tableEnv.toAppendStream(res2, Row.class);
-
-        rowDataStream1.print("t1");
-        rowDataStream2.print("t2");
-
-        tableEnv.execute("table test");
+//        tableEnv.execute("table api test");
     }
 }

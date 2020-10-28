@@ -8,7 +8,7 @@ import org.apache.flink.streaming.api.scala._
 import org.apache.flink.streaming.connectors.kafka.{FlinkKafkaConsumer011, FlinkKafkaProducer011}
 
 /**
-  * Copyright (c) 2018-2028 尚硅谷 All Rights Reserved 
+  * Copyright (c) 2018-2028 hr All Rights Reserved
   *
   * Project: FlinkTutorial
   * Package: com.atguigu.apitest.sinttest

@@ -10,7 +10,7 @@ import org.apache.flink.table.api.scala._
 import org.apache.flink.types.Row
 
 /**
-  * Copyright (c) 2018-2028 尚硅谷 All Rights Reserved 
+  * Copyright (c) 2018-2028 hr All Rights Reserved
   *
   * Project: FlinkTutorial
   * Package: com.atguigu.apitest.tabletest

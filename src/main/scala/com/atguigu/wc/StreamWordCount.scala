@@ -4,7 +4,7 @@ import org.apache.flink.api.java.utils.ParameterTool
 import org.apache.flink.streaming.api.scala._
 
 /**
-  * Copyright (c) 2018-2028 尚硅谷 All Rights Reserved 
+  * Copyright (c) 2018-2028 hr All Rights Reserved
   *
   * Project: FlinkTutorial
   * Package: com.atguigu.wc
