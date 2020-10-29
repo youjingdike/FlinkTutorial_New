@@ -10,7 +10,7 @@ import org.apache.flink.streaming.api.scala._
   * Package: com.atguigu.wc
   * Version: 1.0
   *
-  * Created by wushengran on 2020/8/4 14:05
+  * Created by hr on 2020/8/4 14:05
   */
 // 流处理word count
 object StreamWordCount {

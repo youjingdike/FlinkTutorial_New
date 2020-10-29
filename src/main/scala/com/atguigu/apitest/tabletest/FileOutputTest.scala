@@ -13,7 +13,7 @@ import org.apache.flink.types.Row
   * Package: com.atguigu.apitest.tabletest
   * Version: 1.0
   *
-  * Created by wushengran on 2020/8/10 16:30
+  * Created by hr on 2020/8/10 16:30
   */
 object FileOutputTest {
   def main(args: Array[String]): Unit = {

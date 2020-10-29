@@ -17,7 +17,7 @@ import org.elasticsearch.client.Requests
   * Package: com.atguigu.apitest.sinttest
   * Version: 1.0
   *
-  * Created by wushengran on 2020/8/7 10:49
+  * Created by hr on 2020/8/7 10:49
   */
 object EsSinkTest {
   def main(args: Array[String]): Unit = {

@@ -17,7 +17,7 @@ import org.apache.flink.types.Row
   * Package: com.atguigu.apitest.tabletest.udftest
   * Version: 1.0
   *
-  * Created by wushengran on 2020/8/11 17:20
+  * Created by hr on 2020/8/11 17:20
   */
 object TableFunctionTest {
   def main(args: Array[String]): Unit = {

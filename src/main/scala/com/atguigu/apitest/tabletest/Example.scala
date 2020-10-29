@@ -12,7 +12,7 @@ import org.apache.flink.table.api.scala._
   * Package: com.atguigu.apitest.tabletest
   * Version: 1.0
   *
-  * Created by wushengran on 2020/8/10 11:49
+  * Created by hr on 2020/8/10 11:49
   */
 object Example {
   def main(args: Array[String]): Unit = {

@@ -13,7 +13,7 @@ import org.apache.flink.streaming.connectors.redis.common.mapper.{RedisCommand, 
   * Package: com.atguigu.apitest.sinttest
   * Version: 1.0
   *
-  * Created by wushengran on 2020/8/7 10:28
+  * Created by hr on 2020/8/7 10:28
   */
 object RedisSinkTest {
   def main(args: Array[String]): Unit = {

@@ -14,7 +14,7 @@ import org.apache.flink.streaming.api.windowing.time.Time
   * Package: com.atguigu.apitest
   * Version: 1.0
   *
-  * Created by wushengran on 2020/8/7 13:53
+  * Created by hr on 2020/8/7 13:53
   */
 object WindowTest {
   def main(args: Array[String]): Unit = {

@@ -16,7 +16,7 @@ import org.apache.flink.types.Row
   * Package: com.atguigu.apitest.tabletest
   * Version: 1.0
   *
-  * Created by wushengran on 2020/8/11 14:18
+  * Created by hr on 2020/8/11 14:18
   */
 object TimeAndWindowTest {
   def main(args: Array[String]): Unit = {

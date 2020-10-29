@@ -14,7 +14,7 @@ import org.apache.flink.streaming.connectors.kafka.{FlinkKafkaConsumer011, Flink
   * Package: com.atguigu.apitest.sinttest
   * Version: 1.0
   *
-  * Created by wushengran on 2020/8/7 10:12
+  * Created by hr on 2020/8/7 10:12
   */
 object KafkaSinkTest {
   def main(args: Array[String]): Unit = {

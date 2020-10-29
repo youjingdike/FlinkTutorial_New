@@ -14,7 +14,7 @@ import org.apache.flink.util.Collector
   * Package: com.atguigu.apitest
   * Version: 1.0
   *
-  * Created by wushengran on 2020/8/8 15:56
+  * Created by hr on 2020/8/8 15:56
   */
 object SideOutputTest {
   def main(args: Array[String]): Unit = {

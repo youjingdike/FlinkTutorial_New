@@ -12,7 +12,7 @@ import org.apache.flink.table.descriptors._
   * Package: com.atguigu.apitest.tabletest
   * Version: 1.0
   *
-  * Created by wushengran on 2020/8/11 9:27
+  * Created by hr on 2020/8/11 9:27
   */
 object EsOutputTest {
   def main(args: Array[String]): Unit = {

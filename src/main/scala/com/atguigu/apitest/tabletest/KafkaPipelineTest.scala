@@ -12,7 +12,7 @@ import org.apache.flink.table.descriptors.{Csv, Kafka, Schema}
   * Package: com.atguigu.apitest.tabletest
   * Version: 1.0
   *
-  * Created by wushengran on 2020/8/11 9:11
+  * Created by hr on 2020/8/11 9:11
   */
 object KafkaPipelineTest {
   def main(args: Array[String]): Unit = {

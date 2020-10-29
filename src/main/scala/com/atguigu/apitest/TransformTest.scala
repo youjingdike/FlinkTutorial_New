@@ -11,7 +11,7 @@ import org.apache.flink.streaming.api.scala._
   * Package: com.atguigu.apitest
   * Version: 1.0
   *
-  * Created by wushengran on 2020/8/5 15:39
+  * Created by hr on 2020/8/5 15:39
   */
 object TransformTest {
   def main(args: Array[String]): Unit = {

@@ -16,7 +16,7 @@ import scala.util.Random
   * Package: com.atguigu.apitest
   * Version: 1.0
   *
-  * Created by wushengran on 2020/8/5 11:47
+  * Created by hr on 2020/8/5 11:47
   */
 
 // 定义样例类，温度传感器

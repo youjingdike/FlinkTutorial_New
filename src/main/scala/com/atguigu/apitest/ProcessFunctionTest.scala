@@ -14,7 +14,7 @@ import org.apache.flink.util.Collector
   * Package: com.atguigu.apitest
   * Version: 1.0
   *
-  * Created by wushengran on 2020/8/8 14:42
+  * Created by hr on 2020/8/8 14:42
   */
 object ProcessFunctionTest {
   def main(args: Array[String]): Unit = {
