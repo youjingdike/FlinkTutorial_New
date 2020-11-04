@@ -4,12 +4,14 @@ import com.xq.apitest.pojo.SensorReading;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.api.java.ExecutionEnvironment;
+import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.api.java.typeutils.TupleTypeInfo;
 import org.apache.flink.runtime.execution.Environment;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.Table;
@@ -24,6 +26,8 @@ import org.apache.flink.table.types.DataType;
 import org.apache.flink.types.Row;
 
 import java.net.URL;
+import java.util.Arrays;
+import java.util.stream.Stream;
 
 public class TableApiTest {
     public static void main(String[] args) throws Exception {
@@ -85,14 +89,27 @@ public class TableApiTest {
 
         // 3.2 SQL
         Table resultSqlTable = tableEnv.sqlQuery(
-                "select id, temperature from inputTable where id = 'sensor_1'");
+                "select id, temperature as temp from inputTable where id = 'sensor_1'");
 
 //    val inputTable: Table = tableEnv.from("kafkaInputTable")
 //    inputTable.toAppendStream[(String, Long, Double)].print()
-
+        TableSchema schema = resultSqlTable.getSchema();
+        int fieldCount = schema.getFieldCount();
+        Arrays.stream(schema.getFieldNames()).forEach(System.out::println);
+        System.out.println("~~~~~~~~~~~~~~~~~~~~");
+        for (int i = 0; i < fieldCount; i++) {
+            System.out.println(schema.getFieldName(i));
+        }
         tableEnv.toAppendStream(resultTable,new TupleTypeInfo<>(Types.STRING,Types.DOUBLE)).print("result");
-        tableEnv.toAppendStream(resultSqlTable,new TupleTypeInfo<>(Types.STRING,Types.DOUBLE)).print("sql");
-
+        DataStream<Tuple> tupleDataStream = tableEnv.toAppendStream(resultSqlTable, new TupleTypeInfo<>(Types.STRING, Types.DOUBLE));
+        DataStream<Row> rowDataStream = tableEnv.toAppendStream(resultSqlTable, Row.class);
+        tupleDataStream.print("sql");
+        rowDataStream.addSink(new SinkFunction<Row>() {
+            @Override
+            public void invoke(Row value, Context context) throws Exception {
+                System.out.println(value.getField(0));
+            }
+        });
         tableEnv.execute("table api test");
     }
 }
