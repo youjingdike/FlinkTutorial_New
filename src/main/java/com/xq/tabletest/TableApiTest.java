@@ -93,6 +93,7 @@ public class TableApiTest {
 
 //    val inputTable: Table = tableEnv.from("kafkaInputTable")
 //    inputTable.toAppendStream[(String, Long, Double)].print()
+
         TableSchema schema = resultSqlTable.getSchema();
         int fieldCount = schema.getFieldCount();
         Arrays.stream(schema.getFieldNames()).forEach(System.out::println);
@@ -100,16 +101,20 @@ public class TableApiTest {
         for (int i = 0; i < fieldCount; i++) {
             System.out.println(schema.getFieldName(i));
         }
+
         tableEnv.toAppendStream(resultTable,new TupleTypeInfo<>(Types.STRING,Types.DOUBLE)).print("result");
+
         DataStream<Tuple> tupleDataStream = tableEnv.toAppendStream(resultSqlTable, new TupleTypeInfo<>(Types.STRING, Types.DOUBLE));
-        DataStream<Row> rowDataStream = tableEnv.toAppendStream(resultSqlTable, Row.class);
         tupleDataStream.print("sql");
+
+        DataStream<Row> rowDataStream = tableEnv.toAppendStream(resultSqlTable, Row.class);
         rowDataStream.addSink(new SinkFunction<Row>() {
             @Override
             public void invoke(Row value, Context context) throws Exception {
                 System.out.println(value.getField(0));
             }
         });
+
         tableEnv.execute("table api test");
     }
 }
