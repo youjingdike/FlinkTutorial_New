@@ -1,4 +1,4 @@
-package com.xq.apitest;
+package com.xq.apitest.api;
 
 import com.xq.apitest.pojo.SensorReading;
 import org.apache.flink.api.common.functions.MapFunction;
