@@ -77,16 +77,26 @@ public class TimeAndWindowTest {
 
         // 1.2 sql
         /*tabEnv.createTemporaryView("sensorTable",sensorTable);
-        Table sqlQuery = tabEnv.sqlQuery("select id,count(id),avg(temperature),tumble_end(ts, interval '10' second)" +
+        Table resultSqlTable = tabEnv.resultSqlTable("select id,count(id),avg(temperature),tumble_end(ts, interval '10' second)" +
                 " from sensorTable group by id,  tumble(ts, interval '10' second) ");
-//        sqlQuery.printSchema();
-        tabEnv.toAppendStream(sqlQuery, Row.class).print("sql");*/
+//        resultSqlTable.printSchema();
+        tabEnv.toAppendStream(resultSqlTable, Row.class).print("sql");*/
 
         //2. Over window：统计每个sensor每条数据，与之前两行数据的平均温度
         //2.1 table api
         //Over partitionBy 'id orderBy 'ts preceding 2.rows as 'ow
-        sensorTable
-                .window(Over.partitionBy("id").orderBy("").preceding("").as("tw"));
+        /*Table overTalbe = sensorTable
+                .window(Over.partitionBy("id").orderBy("ts").preceding("2.rows").as("ow"))
+                .select("id,ts,id.count over ow,temperature.avg over ow");
+        tabEnv.toAppendStream(overTalbe, Row.class).print("ov");*/
+        //2.2 sql
+        tabEnv.createTemporaryView("sensorTable",sensorTable);
+        Table sqlOverTable = tabEnv.sqlQuery("select id,ts,count(id) over ow,avg(temperature) over ow from sensorTable " +
+                "window ow as (" +
+                "  partition by id" +
+                "  order by ts" +
+                "  rows between 2 preceding and current row)");
+        tabEnv.toAppendStream(sqlOverTable, Row.class).print("sql ov");
         tabEnv.execute("time and window test");
     }
 }

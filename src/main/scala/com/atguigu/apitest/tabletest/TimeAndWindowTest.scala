@@ -1,6 +1,9 @@
 package com.atguigu.apitest.tabletest
 
+import java.net.URL
+
 import com.atguigu.apitest.SensorReading
+import com.xq.tabletest.TableApiTest
 import org.apache.flink.streaming.api.TimeCharacteristic
 import org.apache.flink.streaming.api.functions.timestamps.BoundedOutOfOrdernessTimestampExtractor
 import org.apache.flink.streaming.api.scala._
@@ -31,8 +34,10 @@ object TimeAndWindowTest {
     val tableEnv = StreamTableEnvironment.create(env, settings)
 
     // 读取数据
-    val inputPath = "D:\\Projects\\BigData\\FlinkTutorial\\src\\main\\resources\\sensor.txt"
-    val inputStream = env.readTextFile(inputPath)
+//    val inputPath = "D:\\Projects\\BigData\\FlinkTutorial\\src\\main\\resources\\sensor.txt"
+    val resource: URL = classOf[TableApiTest].getResource("/sensor.txt")
+    val filePath: String = resource.getPath.toString
+    val inputStream = env.readTextFile(filePath)
     //    val inputStream = env.socketTextStream("localhost", 7777)
 
     // 先转换成样例类类型（简单转换操作）
@@ -93,7 +98,7 @@ object TimeAndWindowTest {
 
     // 转换成流打印输出
     overResultTable.toAppendStream[Row].print("result")
-    overResultSqlTable.toRetractStream[Row].print("sql")
+//    overResultSqlTable.toRetractStream[Row].print("sql")
 
 //    sensorTable.printSchema()
 //    sensorTable.toAppendStream[Row].print()
