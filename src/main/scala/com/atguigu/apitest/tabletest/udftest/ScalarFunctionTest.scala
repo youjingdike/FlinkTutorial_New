@@ -1,6 +1,9 @@
 package com.atguigu.apitest.tabletest.udftest
 
+import java.net.URL
+
 import com.atguigu.apitest.SensorReading
+import com.xq.tabletest.TableApiTest
 import org.apache.flink.streaming.api.TimeCharacteristic
 import org.apache.flink.streaming.api.functions.timestamps.BoundedOutOfOrdernessTimestampExtractor
 import org.apache.flink.streaming.api.scala._
@@ -32,7 +35,9 @@ object ScalarFunctionTest {
     val tableEnv = StreamTableEnvironment.create(env, settings)
 
     // 读取数据
-    val inputPath = "D:\\Projects\\BigData\\FlinkTutorial\\src\\main\\resources\\sensor.txt"
+    val resource: URL = classOf[TableApiTest].getResource("/sensor.txt")
+    val inputPath: String = resource.getPath.toString
+//    val inputPath = "D:\\Projects\\BigData\\FlinkTutorial\\src\\main\\resources\\sensor.txt"
     val inputStream = env.readTextFile(inputPath)
     //    val inputStream = env.socketTextStream("localhost", 7777)
 

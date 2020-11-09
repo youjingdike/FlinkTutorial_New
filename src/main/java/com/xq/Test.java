@@ -25,7 +25,8 @@ public class Test {
          public static String date2TimeStamp(String date_str,String format){
                 try {
                       SimpleDateFormat sdf = new SimpleDateFormat(format);
-                     return String.valueOf(sdf.parse(date_str).getTime()/1000);
+                    System.out.println("kkkkk:"+sdf.parse(date_str).getTime());
+                    return String.valueOf(sdf.parse(date_str).getTime()/1000);
                   } catch (Exception e) {
                     e.printStackTrace();
                   }
@@ -55,8 +56,9 @@ public class Test {
               System.out.println("date="+date);
               String date1 = timeStamp2Date(timeStamp1, "yyyy-MM-dd HH:mm:ss");
               System.out.println("date1="+date1);
-//             String timeStamp2 = date2TimeStamp(date, "yyyy-MM-dd HH:mm:ss");
-//               System.out.println(timeStamp2);
-          }
+             String timeStamp2 = date2TimeStamp(date, "yyyy-MM-dd HH:mm:ss");
+               System.out.println(timeStamp2);
+               System.out.println(date2TimeStamp("2020-11-08 14:32:00", "yyyy-MM-dd HH:mm:ss"));
+           }
 
 }
