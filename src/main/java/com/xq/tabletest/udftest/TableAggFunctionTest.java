@@ -12,6 +12,7 @@ import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.java.StreamTableEnvironment;
+import org.apache.flink.types.Row;
 
 import java.net.URL;
 
@@ -41,31 +42,12 @@ public class TableAggFunctionTest {
                 });
 
         Table sensorTable = tabEnv.fromDataStream(dataStream, "id,temperature,timestamp.rowtime as ts");
-
-
+        tabEnv.registerFunction("top2Temp",new Top2Temp());
+        Table resTable = sensorTable.groupBy("id")
+                .flatAggregate("top2Temp(temperature) as (temp,rank)")
+                .select("id,temp,rank");
+        tabEnv.toRetractStream(resTable, Row.class).print("res");
 
         tabEnv.execute("agg table func");
-    }
-}
-
-// 自定义状态类
-class Top2TempAcc {
-    private Double highestTemp = Double.MAX_VALUE;
-    private Double secondHighestTemp = Double.MAX_VALUE;
-
-    public Double getHighestTemp() {
-        return highestTemp;
-    }
-
-    public void setHighestTemp(Double highestTemp) {
-        this.highestTemp = highestTemp;
-    }
-
-    public Double getSecondHighestTemp() {
-        return secondHighestTemp;
-    }
-
-    public void setSecondHighestTemp(Double secondHighestTemp) {
-        this.secondHighestTemp = secondHighestTemp;
     }
 }
