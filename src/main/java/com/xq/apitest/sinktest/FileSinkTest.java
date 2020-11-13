@@ -21,7 +21,7 @@ public class FileSinkTest {
 
         URL resource = FileSinkTest.class.getResource("/sensor.txt");
         DataStreamSource<String> inputStream = env.readTextFile(resource.getPath().toString());
-        SingleOutputStreamOperator<SensorReading> map = inputStream.map(new MapFunction<String, SensorReading>() {
+        SingleOutputStreamOperator<SensorReading> dataStream = inputStream.map(new MapFunction<String, SensorReading>() {
             @Override
             public SensorReading map(String value) throws Exception {
                 String[] split = value.split(",");
@@ -29,7 +29,7 @@ public class FileSinkTest {
             }
         });
 
-        map.print();
+        dataStream.print();
 
         StreamingFileSink<SensorReading> sink1 = StreamingFileSink.forRowFormat(
                 new Path("D:\\code\\FlinkTutorial_1.10_New\\src\\main\\resources\\out_1.txt"),
