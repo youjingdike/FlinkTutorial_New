@@ -1,0 +1,8 @@
+SensorReading1{id='sensor_1', timestamp=1547718199, temperature=35.8}
+SensorReading1{id='sensor_6', timestamp=1547718201, temperature=15.4}
+SensorReading1{id='sensor_7', timestamp=1547718202, temperature=6.7}
+SensorReading1{id='sensor_10', timestamp=1547718205, temperature=38.1}
+SensorReading1{id='sensor_1', timestamp=1547718206, temperature=32.2}
+SensorReading1{id='sensor_1', timestamp=1547718208, temperature=16.2}
+SensorReading1{id='sensor_1', timestamp=1547718210, temperature=29.7}
+SensorReading1{id='sensor_1', timestamp=1547718213, temperature=30.9}

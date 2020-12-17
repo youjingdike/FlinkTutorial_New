@@ -10,6 +10,9 @@ import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
+import org.apache.flink.streaming.api.operators.StreamingRuntimeContext;
+import org.apache.flink.streaming.runtime.tasks.ProcessingTimeCallback;
+import org.apache.flink.streaming.runtime.tasks.ProcessingTimeService;
 import org.apache.flink.util.Collector;
 
 import java.net.URL;
@@ -48,10 +51,10 @@ public class ProcessFunctionTest {
 }
 
 // 实现自定义的KeyedProcessFunction
-class TempIncreWaining extends KeyedProcessFunction<String, SensorReading, String> {
+class TempIncreWaining extends KeyedProcessFunction<String, SensorReading, String> implements ProcessingTimeCallback {
 
     private Long interval;
-
+    private transient ProcessingTimeService processingTimeService;
     private ValueState<Double> lastTempState = null;
     //定义状态：保存上一个温度值进行比较，保存注册定时器的时间戳用于删除
     private ValueState<Long> timerTsState = null;
@@ -64,6 +67,7 @@ class TempIncreWaining extends KeyedProcessFunction<String, SensorReading, Strin
     public void open(Configuration parameters) throws Exception {
         lastTempState = getRuntimeContext().getState(new ValueStateDescriptor<Double>("lastTempState",Double.class));
         timerTsState = getRuntimeContext().getState(new ValueStateDescriptor<Long>("timerTsState",Long.class));
+        this.processingTimeService = ((StreamingRuntimeContext) getRuntimeContext()).getProcessingTimeService();
     }
 
     @Override
@@ -80,12 +84,24 @@ class TempIncreWaining extends KeyedProcessFunction<String, SensorReading, Strin
             ctx.timerService().deleteProcessingTimeTimer(timerTs);
             timerTsState.clear();
         }
+        processingTimeService.registerTimer(ctx.timerService().currentProcessingTime() + interval,this);
     }
 
     @Override
     public void onTimer(long timestamp, OnTimerContext ctx, Collector<String> out) throws Exception {
         out.collect("传感器" + ctx.getCurrentKey() + "的温度连续" + interval/1000 + "秒连续上升");
+        System.out.println("`````````onTimer:"+timestamp);
         timerTsState.clear();
+    }
+
+    /**
+     * 需要在processingTimeService里面注册时间服务
+     * @param timestamp
+     * @throws Exception
+     */
+    @Override
+    public void onProcessingTime(long timestamp) throws Exception {
+        System.out.println("~~~~~~~~~~~~~~~`onProcessingTime:"+timestamp);
     }
 }
 
