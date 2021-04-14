@@ -32,8 +32,7 @@ public class SideOutputTest {
 
         process.print("process");
 
-        process.getSideOutput(new OutputTag<Tuple3<String, Long, Double>>("low") {
-        }).print("sideOutput");
+        process.getSideOutput(new OutputTag<Tuple3<String, Long, Double>>("low") {}).print("sideOutput");
         env.execute("test sideOutput func");
     }
 }
