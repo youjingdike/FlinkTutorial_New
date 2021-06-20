@@ -16,12 +16,12 @@ import org.apache.flink.streaming.api.functions.sink.filesystem.rollingpolicies.
 
 import java.net.URL;
 
-public class FileSinkTest {
+public class StreamingFileSinkTest {
     public static void main(String[] args) throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
 
-        URL resource = FileSinkTest.class.getResource("/sensor.txt");
+        URL resource = StreamingFileSinkTest.class.getResource("/sensor.txt");
         DataStreamSource<String> inputStream = env.readTextFile(resource.getPath().toString());
         SingleOutputStreamOperator<SensorReading> dataStream = inputStream.map(new MapFunction<String, SensorReading>() {
             @Override
