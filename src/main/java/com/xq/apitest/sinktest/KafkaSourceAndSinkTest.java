@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Properties;
 
-public class KafkaSinkTest {
+public class KafkaSourceAndSinkTest {
     public static void main(String[] args) throws Exception {
 //        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         Configuration conf = new Configuration();

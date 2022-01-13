@@ -3,16 +3,38 @@ package com.xq.apitest.sinktest;
 import com.xq.apitest.pojo.SensorReading;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.functions.RuntimeContext;
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 import org.apache.flink.streaming.connectors.elasticsearch.ElasticsearchSinkFunction;
 import org.apache.flink.streaming.connectors.elasticsearch.RequestIndexer;
 import org.apache.flink.streaming.connectors.elasticsearch6.ElasticsearchSink;
+import org.apache.flink.streaming.connectors.elasticsearch6.RestClientFactory;
+import org.apache.http.Header;
 import org.apache.http.HttpHost;
+import org.apache.http.auth.AuthSchemeProvider;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.KerberosCredentials;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.config.AuthSchemes;
+import org.apache.http.config.Lookup;
+import org.apache.http.config.RegistryBuilder;
+import org.apache.http.impl.auth.SPNegoSchemeFactory;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.Requests;
+import org.elasticsearch.client.RestClient;
+import org.elasticsearch.client.RestClientBuilder;
+import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.VersionType;
+import org.ietf.jgss.GSSCredential;
+import sun.security.jgss.GSSCredentialImpl;
+import sun.security.jgss.GSSManagerImpl;
+import sun.security.jgss.krb5.Krb5InitCredential;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -64,9 +86,72 @@ public class EsSinkTest {
             }
         };
 
-        dataStream.addSink(new ElasticsearchSink.Builder<SensorReading>(httpHosts,esSinkFun).build());
+        ElasticsearchSink.Builder<SensorReading> builder = new ElasticsearchSink.Builder<>(httpHosts, esSinkFun);
+        builder.setRestClientFactory(new RestClientFactory() {
+            @Override
+            public void configureRestClientBuilder(RestClientBuilder restClientBuilder) {
+
+                restClientBuilder.setHttpClientConfigCallback(new RestClientBuilder.HttpClientConfigCallback() {
+                    @Override
+                    public HttpAsyncClientBuilder customizeHttpClient(HttpAsyncClientBuilder httpClientBuilder) {
+                        Lookup<AuthSchemeProvider> authSchemeRegistry = RegistryBuilder.<AuthSchemeProvider>create().
+                                register(AuthSchemes.SPNEGO, new SPNegoSchemeFactory(true)).build();
+
+                        final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+                //        credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials("", ""));
+                        GSSManagerImpl gssManager = new GSSManagerImpl();
+//                        Krb5InitCredential krb5InitCredential = Krb5InitCredential.
+//                        GSSCredential gssCredential = new GSSCredentialImpl();
+//                        credentialsProvider.setCredentials(new AuthScope(null, -1, null), new KerberosCredentials(gssCredential));
+
+                        httpClientBuilder.setDefaultAuthSchemeRegistry(authSchemeRegistry);
+                        httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
+                        return httpClientBuilder;
+                    }
+                });
+            }
+        });
+        dataStream.addSink(builder.build());
 
         env.execute("test es sink job");
+    }
+}
+
+class SinkEsFun extends RichSinkFunction<String> {
+
+    @Override
+    public void open(Configuration parameters) throws Exception {
+//        System.setProperty("java.security.krb5.conf", "");
+//        System.setProperty("es.security.indication", "true");
+//
+//        Header[] defaultHeaders = {};
+//        HttpHost httpHost = new HttpHost("localhost",9200,"http");
+//        RestClientBuilder builder = RestClient.builder(httpHost);
+//        builder.setDefaultHeaders(defaultHeaders);
+//
+//        Lookup<AuthSchemeProvider> authSchemeRegistry = RegistryBuilder.<AuthSchemeProvider>create().
+//                register(AuthSchemes.SPNEGO, new SPNegoSchemeFactory(true)).build();
+//
+//        final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+////        credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials("", ""));
+//        GSSManagerImpl gssManager = new GSSManagerImpl();
+//        Krb5InitCredential krb5InitCredential = Krb5InitCredential.
+//        GSSCredential gssCredential = new GSSCredentialImpl();
+//        credentialsProvider.setCredentials(new AuthScope(null, -1, null), new KerberosCredentials(gssCredential));
+//
+//        builder.setHttpClientConfigCallback(new RestClientBuilder.HttpClientConfigCallback() {
+//            @Override
+//            public HttpAsyncClientBuilder customizeHttpClient(HttpAsyncClientBuilder httpClientBuilder) {
+//                httpClientBuilder.setDefaultAuthSchemeRegistry(authSchemeRegistry);
+//                httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
+//                return httpClientBuilder;
+//            }
+//        });
+//
+////        RestClient client = builder.build();
+//        RestHighLevelClient restHighLevelClient = new RestHighLevelClient(builder);
+
+
     }
 }
 
