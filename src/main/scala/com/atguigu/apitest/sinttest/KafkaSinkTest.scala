@@ -63,6 +63,7 @@ object KafkaSinkTest {
       .setBootstrapServers("localhost:9092")
       .setDeliverGuarantee(DeliveryGuarantee.EXACTLY_ONCE)
       .setRecordSerializer(serSchema.build())
+      .setTransactionalIdPrefix("xq")
     dataStream.sinkTo(kafkaSinkBuilder.build()).name("tstsink").uid("tstsink")
 //    dataStream.addSink( new FlinkKafkaProducer011[String]("localhost:9092", "sinktest", new SimpleStringSchema()) )
 
