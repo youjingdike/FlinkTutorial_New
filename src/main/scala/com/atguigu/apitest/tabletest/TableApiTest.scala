@@ -1,10 +1,8 @@
 package com.atguigu.apitest.tabletest
 
-import org.apache.flink.api.scala.ExecutionEnvironment
 import org.apache.flink.streaming.api.scala._
-import org.apache.flink.table.api.{DataTypes, EnvironmentSettings, Table, TableEnvironment}
-import org.apache.flink.table.api.scala._
-import org.apache.flink.table.descriptors._
+import org.apache.flink.table.api.bridge.scala._
+import org.apache.flink.table.api._
 
 /**
   * Copyright (c) 2018-2028 hr All Rights Reserved
@@ -53,18 +51,19 @@ object TableApiTest {
     // 2. 连接外部系统，读取数据，注册表
     // 2.1 读取文件
     val filePath = "D:\\Projects\\BigData\\FlinkTutorial\\src\\main\\resources\\sensor.txt"
-
-    tableEnv.connect(new FileSystem().path(filePath))
+    val sourceDescriptor = TableDescriptor.forConnector("filesystem").schema(Schema.newBuilder.column("id", DataTypes.STRING).column("timestamp", DataTypes.BIGINT).column("temperature", DataTypes.DOUBLE).build).option("path", filePath).format("csv").build
+    tableEnv.createTemporaryTable("inputTable", sourceDescriptor)
+    /*tableEnv.connect(new FileSystem().path(filePath))
       .withFormat(new Csv())
       .withSchema(new Schema()
         .field("id", DataTypes.STRING())
         .field("timestamp", DataTypes.BIGINT())
         .field("temperature", DataTypes.DOUBLE())
       )
-      .createTemporaryTable("inputTable")
+      .createTemporaryTable("inputTable")*/
 
     // 2.2 从kafka读取数据
-    tableEnv.connect(new Kafka()
+    /*tableEnv.connect(new Kafka()
       .version("0.11")
       .topic("sensor")
       .property("zookeeper.connect", "localhost:2181")
@@ -76,7 +75,7 @@ object TableApiTest {
         .field("timestamp", DataTypes.BIGINT())
         .field("temperature", DataTypes.DOUBLE())
       )
-      .createTemporaryTable("kafkaInputTable")
+      .createTemporaryTable("kafkaInputTable")*/
 
     // 3. 查询转换
     // 3.1 使用table api

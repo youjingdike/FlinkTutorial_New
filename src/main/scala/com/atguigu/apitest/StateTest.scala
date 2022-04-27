@@ -40,7 +40,7 @@ object StateTest {
     chkpConfig.setCheckpointTimeout(60000)
     chkpConfig.setMaxConcurrentCheckpoints(2)
     chkpConfig.setMinPauseBetweenCheckpoints(500L)
-    chkpConfig.setPreferCheckpointForRecovery(true)
+    chkpConfig.setForceUnalignedCheckpoints(false)
     chkpConfig.setTolerableCheckpointFailureNumber(0)
 
     // 重启策略配置

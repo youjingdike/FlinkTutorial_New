@@ -1,11 +1,12 @@
 package com.atguigu.apitest
 
-import java.util.Properties
-
+import org.apache.flink.api.common.eventtime.WatermarkStrategy
 import org.apache.flink.api.common.serialization.SimpleStringSchema
+import org.apache.flink.connector.kafka.source.KafkaSource
+import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer
+import org.apache.flink.connector.kafka.source.reader.deserializer.KafkaRecordDeserializationSchema
 import org.apache.flink.streaming.api.functions.source.SourceFunction
-import org.apache.flink.streaming.api.scala._
-import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer011
+import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment, createTypeInformation}
 
 import scala.util.Random
 
@@ -20,7 +21,7 @@ import scala.util.Random
   */
 
 // 定义样例类，温度传感器
-case class SensorReading( id: String, timestamp: Long, temperature: Double )
+case class SensorReading( id: String, timestamp: Long, temperature: Double ) extends Serializable
 
 object SourceTest {
   def main(args: Array[String]): Unit = {
@@ -35,7 +36,7 @@ object SourceTest {
       SensorReading("sensor_7", 1547718202, 6.7),
       SensorReading("sensor_10", 1547718205, 38.1)
     )
-    val stream1 = env.fromCollection(dataList)
+    val stream1: DataStream[SensorReading] = env.fromCollection(dataList)
 //    env.fromElements(1.0, 35, "hello")
 
     // 2. 从文件中读取数据
@@ -43,10 +44,17 @@ object SourceTest {
     val stream2 = env.readTextFile(inputPath)
 
     // 3. 从kafka中读取数据
-    val properties = new Properties()
-    properties.setProperty("bootstrap.servers", "localhost:9092")
-    properties.setProperty("group.id", "consumer-group")
-    val stream3 = env.addSource( new FlinkKafkaConsumer011[String]("sensor", new SimpleStringSchema(), properties) )
+    /*val properties = new Properties()
+    properties.setProperty("group.id", "consumer-group")*/
+
+    val kafkaSource:KafkaSource[String] = KafkaSource.builder()
+      .setBootstrapServers("localhost:9092")
+      .setTopics("sensor")
+      .setGroupId("my-group")
+      .setStartingOffsets(OffsetsInitializer.earliest())
+      .setDeserializer(KafkaRecordDeserializationSchema.valueOnly[String](new SimpleStringSchema()))
+      .build()
+    val stream3 = env.fromSource(kafkaSource,WatermarkStrategy.noWatermarks(),"kakfa source")
 
     // 4. 自定义Source
     val stream4 = env.addSource( new MySensorSource() )

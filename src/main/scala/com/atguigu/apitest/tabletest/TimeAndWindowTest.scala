@@ -1,16 +1,16 @@
 package com.atguigu.apitest.tabletest
 
-import java.net.URL
-
 import com.atguigu.apitest.SensorReading
 import com.xq.tabletest.TableApiTest
 import org.apache.flink.streaming.api.TimeCharacteristic
 import org.apache.flink.streaming.api.functions.timestamps.BoundedOutOfOrdernessTimestampExtractor
 import org.apache.flink.streaming.api.scala._
 import org.apache.flink.streaming.api.windowing.time.Time
-import org.apache.flink.table.api.{EnvironmentSettings, Over, Tumble}
-import org.apache.flink.table.api.scala._
+import org.apache.flink.table.api._
+import org.apache.flink.table.api.bridge.scala._
 import org.apache.flink.types.Row
+
+import java.net.URL
 
 /**
   * Copyright (c) 2018-2028 hr All Rights Reserved

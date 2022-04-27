@@ -2,7 +2,9 @@ package com.atguigu.apitest
 
 import org.apache.flink.api.common.functions.{FilterFunction, MapFunction, ReduceFunction, RichMapFunction}
 import org.apache.flink.configuration.Configuration
+import org.apache.flink.streaming.api.functions.ProcessFunction
 import org.apache.flink.streaming.api.scala._
+import org.apache.flink.util.Collector
 
 /**
   * Copyright (c) 2018-2028 hr All Rights Reserved
@@ -45,21 +47,34 @@ object TransformTest {
     //    resultStream.print()
 
     // 4. 多流转换操作
-    // 4.1 分流，将传感器温度数据分成低温、高温两条流
-    val splitStream = dataStream
+    // 4.1 分流，将传感器温度数据分成低温、高温两条流，split已经删除，可以用测输出实现
+    /*val splitStream = dataStream
       .split( data => {
         if( data.temperature > 30.0 ) Seq("high") else Seq("low")
       } )
     val highTempStream = splitStream.select("high")
     val lowTempStream = splitStream.select("low")
-    val allTempStream = splitStream.select("high", "low")
-
+    val allTempStream = splitStream.select("high", "low")*/
 //    highTempStream.print("high")
 //    lowTempStream.print("low")
 //    allTempStream.print("all")
-
+    val low = OutputTag[SensorReading]("low")
+    val high = OutputTag[SensorReading]("high")
+    val splitStream = dataStream.process(new ProcessFunction[SensorReading, SensorReading] {
+      override def processElement(value: SensorReading, ctx: ProcessFunction[SensorReading, SensorReading]#Context, collector: Collector[SensorReading]): Unit = {
+        if (value.temperature > 30.0) {
+          // 如果当前温度值大于30，那么输出到主流
+          ctx.output(high, value)
+        } else {
+          // 如果不超过30度，那么输出到侧输出流
+          ctx.output(low,value)
+        }
+      }
+    })
+    val highTempStream = splitStream.getSideOutput(high)
     // 4.2 合流，connect
     val warningStream = highTempStream.map( data => (data.id, data.temperature) )
+    val lowTempStream = splitStream.getSideOutput(low)
     val connectedStreams = warningStream.connect(lowTempStream)
 
     // 用coMap对数据进行分别处理
@@ -70,7 +85,7 @@ object TransformTest {
       )
     
     // 4.3 union合流
-    val unionStream = highTempStream.union(lowTempStream, allTempStream)
+    val unionStream = highTempStream.union(lowTempStream, dataStream)
 
     coMapResultStream.print("coMap")
 

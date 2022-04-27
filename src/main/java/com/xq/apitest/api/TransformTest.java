@@ -6,17 +6,15 @@ import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;
-import org.apache.flink.streaming.api.collector.selector.OutputSelector;
 import org.apache.flink.streaming.api.datastream.ConnectedStreams;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
-import org.apache.flink.streaming.api.datastream.SplitStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.ProcessFunction;
 import org.apache.flink.streaming.api.functions.co.CoMapFunction;
-
-import java.util.ArrayList;
-import java.util.List;
+import org.apache.flink.util.Collector;
+import org.apache.flink.util.OutputTag;
 
 public class TransformTest {
     public static void main(String[] args) throws Exception {
@@ -43,8 +41,8 @@ public class TransformTest {
                     return new SensorReading(cur.getId(), newData.getTimestamp() + 1, Math.min(cur.getTemperature(), newData.getTemperature()));
                 });
 
-        // 4. 分流操作，split/select，以30度为界划分高低温流
-        SplitStream<SensorReading> splitStream = dataStream.split(new OutputSelector<SensorReading>() {
+        // 4. 分流操作，split/select，以30度为界划分高低温流,已经删除，可以用测输出流实现
+        /*SplitStream<SensorReading> splitStream = dataStream.split(new OutputSelector<SensorReading>() {
             @Override
             public Iterable<String> select(SensorReading value) {
                 List<String> output = new ArrayList<String>();
@@ -58,14 +56,27 @@ public class TransformTest {
         });
         DataStream<SensorReading> highStream = splitStream.select("high");
         DataStream<SensorReading> lowStream = splitStream.select("low");
-        DataStream<SensorReading> allStream = splitStream.select("high", "low");
+        DataStream<SensorReading> allStream = splitStream.select("high", "low");*/
+        OutputTag<SensorReading> lowOutputTag = new OutputTag<SensorReading>("low") {};
+        OutputTag<SensorReading> highOutputTag = new OutputTag<SensorReading>("high") {};
+        SingleOutputStreamOperator<SensorReading> process = dataStream.process(new ProcessFunction<SensorReading, SensorReading>() {
+            @Override
+            public void processElement(SensorReading value, ProcessFunction<SensorReading, SensorReading>.Context ctx, Collector<SensorReading> collector) throws Exception {
+                if (value.getTemperature() > 30) {
+                    ctx.output(highOutputTag, value);
+                } else {
+                    ctx.output(lowOutputTag, value);
+                }
+            }
+        });
 
-        SingleOutputStreamOperator<Tuple2<String, Double>> highWarningStream = highStream.map(new MapFunction<SensorReading, Tuple2<String, Double>>() {
+        SingleOutputStreamOperator<Tuple2<String, Double>> highWarningStream = process.getSideOutput(highOutputTag).map(new MapFunction<SensorReading, Tuple2<String, Double>>() {
             @Override
             public Tuple2<String, Double> map(SensorReading value) throws Exception {
                 return new Tuple2<>(value.getId(), value.getTemperature());
             }
         });
+        DataStream<SensorReading> lowStream = process.getSideOutput(lowOutputTag);
 
         // 5. 合流操作，connect/comap
         ConnectedStreams<Tuple2<String, Double>, SensorReading> connectedStream = highWarningStream.connect(lowStream);
@@ -84,7 +95,7 @@ public class TransformTest {
         * 1． Union 之前两个流的类型必须是一样， Connect 可以不一样，在之后的 coMap中再去调整成为一样的。
         * 2. Connect 只能操作两个流， Union 可以操作多个。
         */
-        DataStream<SensorReading> unionStream = highStream.union(lowStream);
+        DataStream<SensorReading> unionStream = process.getSideOutput(highOutputTag).union(lowStream);
 //        minby.print("minby");
 //        reduce.print("reduce");
         /*highStream.print("high");

@@ -1,9 +1,8 @@
 package com.atguigu.apitest.tabletest
 
 import org.apache.flink.streaming.api.scala._
-import org.apache.flink.table.api.DataTypes
-import org.apache.flink.table.api.scala._
-import org.apache.flink.table.descriptors._
+import org.apache.flink.table.api.bridge.scala.StreamTableEnvironment
+import org.apache.flink.table.api._
 
 /**
   * Copyright (c) 2018-2028 hr All Rights Reserved
@@ -25,14 +24,26 @@ object EsOutputTest {
     // 2. 连接外部系统，读取数据，注册表
     val filePath = "D:\\Projects\\BigData\\FlinkTutorial\\src\\main\\resources\\sensor.txt"
 
-    tableEnv.connect(new FileSystem().path(filePath))
+    /*tableEnv.connect(new FileSystem().path(filePath))
       .withFormat(new Csv())
       .withSchema(new Schema()
         .field("id", DataTypes.STRING())
         .field("timestamp", DataTypes.BIGINT())
         .field("temp", DataTypes.DOUBLE())
       )
-      .createTemporaryTable("inputTable")
+      .createTemporaryTable("inputTable")*/
+    val srcDesc = TableDescriptor.forConnector("filesystem")
+      .schema(Schema.newBuilder
+        .column("id", DataTypes.STRING)
+        .column("timestamp", DataTypes.BIGINT)
+        .column("temp", DataTypes.DOUBLE)
+        .build)
+      .option("path", filePath)
+      .format(FormatDescriptor.forFormat("csv")
+        .option("field-delimiter", ",")
+        .build)
+      .build
+    tableEnv.createTemporaryTable("inputTable",srcDesc)
 
     // 3. 转换操作
     val sensorTable = tableEnv.from("inputTable")
@@ -47,7 +58,7 @@ object EsOutputTest {
       .select('id, 'id.count as 'count)
 
     // 4. 输出到es
-    tableEnv.connect(new Elasticsearch()
+    /*tableEnv.connect(new Elasticsearch()
       .version("6")
       .host("localhost", 9200, "http")
       .index("sensor")
@@ -59,9 +70,18 @@ object EsOutputTest {
         .field("id", DataTypes.STRING())
         .field("count", DataTypes.BIGINT())
       )
-      .createTemporaryTable("esOutputTable")
-
-    aggTable.insertInto("esOutputTable")
+      .createTemporaryTable("esOutputTable")*/
+    val sinkDescriptor: TableDescriptor = TableDescriptor.forConnector("elasticsearch-6")
+      .schema(Schema.newBuilder
+        .column("id", DataTypes.STRING)
+        .column("count", DataTypes.BIGINT)
+        .build)
+      .option("hosts", "http://localhost:9200")
+      .option("index", "sensor")
+      .format("json")
+      .build
+    tableEnv.createTemporaryTable("esOutputTable", sinkDescriptor)
+    aggTable.executeInsert("esOutputTable")
 
     env.execute("es output test")
 

@@ -1,39 +1,34 @@
 package com.xq.tabletest;
 
-import com.xq.apitest.pojo.SensorReading;
-import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.typeinfo.Types;
-import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.api.java.typeutils.TupleTypeInfo;
-import org.apache.flink.runtime.execution.Environment;
 import org.apache.flink.streaming.api.datastream.DataStream;
-import org.apache.flink.streaming.api.datastream.DataStreamSource;
-import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.api.EnvironmentSettings;
+import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.Table;
+import org.apache.flink.table.api.TableDescriptor;
+import org.apache.flink.table.api.TableEnvironment;
 import org.apache.flink.table.api.TableSchema;
-import org.apache.flink.table.api.java.BatchTableEnvironment;
-import org.apache.flink.table.api.java.StreamTableEnvironment;
-import org.apache.flink.table.descriptors.Csv;
-import org.apache.flink.table.descriptors.FileSystem;
-import org.apache.flink.table.descriptors.Kafka;
-import org.apache.flink.table.descriptors.Schema;
-import org.apache.flink.table.types.DataType;
+import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.types.Row;
 
 import java.net.URL;
 import java.util.Arrays;
-import java.util.stream.Stream;
 
 public class TableApiTest {
     public static void main(String[] args) throws Exception {
-        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        env.setParallelism(1);
+        /*EnvironmentSettings settings = EnvironmentSettings
+                .newInstance()
+                .inStreamingMode()
+                .build();
 
+        TableEnvironment tableEnv = TableEnvironment.create(settings);*/
+
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         StreamTableEnvironment tableEnv = StreamTableEnvironment.create(env);
 
         /*// 1.1 基于老版本planner的流处理
@@ -58,15 +53,24 @@ public class TableApiTest {
         // 2. 连接外部系统，读取数据，注册表
         // 2.1 读取文件
         URL resource = TableApiTest.class.getResource("/sensor.txt");
-        String filePath = resource.getPath().toString();
-
-        tableEnv.connect(new FileSystem().path(filePath))
+        String filePath = resource.getPath();
+        final TableDescriptor sourceDescriptor = TableDescriptor.forConnector("filesystem")
+                .schema(Schema.newBuilder()
+                        .column("id", DataTypes.STRING())
+                        .column("timestamp", DataTypes.BIGINT())
+                        .column("temperature", DataTypes.DOUBLE())
+                        .build())
+                .option("path", filePath)
+                .format("csv")
+                .build();
+        tableEnv.createTemporaryTable("inputTable",sourceDescriptor);
+        /*tableEnv.connect(new FileSystem().path(filePath))
             .withFormat(new Csv())
             .withSchema(new Schema()
                     .field("id", DataTypes.STRING())
                     .field("timestamp",DataTypes.BIGINT())
                     .field("temperature",DataTypes.DOUBLE()))
-                .createTemporaryTable("inputTable");
+                .createTemporaryTable("inputTable");*/
         // 2.2 读取kafka
         /*tableEnv.connect(new Kafka()
                 .version("0.11")
@@ -102,12 +106,13 @@ public class TableApiTest {
             System.out.println(schema.getFieldName(i));
         }
 
+//        tableEnv.toDataStream(resultTable,new TupleTypeInfo<>(Types.STRING,Types.DOUBLE))
         tableEnv.toAppendStream(resultTable,new TupleTypeInfo<>(Types.STRING,Types.DOUBLE)).print("result");
 
         DataStream<Tuple> tupleDataStream = tableEnv.toAppendStream(resultSqlTable, new TupleTypeInfo<>(Types.STRING, Types.DOUBLE));
         tupleDataStream.print("sql");
 
-        DataStream<Row> rowDataStream = tableEnv.toAppendStream(resultSqlTable, Row.class);
+        DataStream<Row> rowDataStream = tableEnv.toDataStream(resultSqlTable, Row.class);
         rowDataStream.addSink(new SinkFunction<Row>() {
             @Override
             public void invoke(Row value, Context context) throws Exception {
@@ -115,6 +120,6 @@ public class TableApiTest {
             }
         });
 
-        tableEnv.execute("table api test");
+        env.execute("table api test");
     }
 }

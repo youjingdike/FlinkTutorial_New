@@ -40,7 +40,7 @@ public class StateTest {
         checkpointConfig.setCheckpointTimeout(60000);
         checkpointConfig.setMaxConcurrentCheckpoints(2);
         checkpointConfig.setMinPauseBetweenCheckpoints(500L);
-        checkpointConfig.setPreferCheckpointForRecovery(true);
+//        checkpointConfig.setPreferCheckpointForRecovery(true);
         checkpointConfig.setTolerableCheckpointFailureNumber(0);
 
 //        env.setRestartStrategy(RestartStrategies.fixedDelayRestart(3,10000L));

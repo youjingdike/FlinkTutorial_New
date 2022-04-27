@@ -1,9 +1,8 @@
 package com.atguigu.apitest.tabletest
 
 import org.apache.flink.streaming.api.scala._
-import org.apache.flink.table.api.DataTypes
-import org.apache.flink.table.api.scala._
-import org.apache.flink.table.descriptors.{Csv, Kafka, Schema}
+import org.apache.flink.table.api._
+import org.apache.flink.table.api.bridge.scala.StreamTableEnvironment
 
 /**
   * Copyright (c) 2018-2028 hr All Rights Reserved
@@ -23,7 +22,19 @@ object KafkaPipelineTest {
     val tableEnv = StreamTableEnvironment.create(env)
 
     // 2. 从kafka读取数据
-    tableEnv.connect(new Kafka()
+    val sourceDescriptor: TableDescriptor = TableDescriptor.forConnector("kafka")
+      .schema(Schema.newBuilder
+        .column("id", DataTypes.STRING)
+        .column("timestamp", DataTypes.BIGINT)
+        .column("temperature", DataTypes.DOUBLE)
+        .build)
+      .option("topic", "sensor")
+      .option("bootstrap.servers", "localhost:2181")
+      .option("group.id", "testGroup")
+      .format("csv")
+      .build
+    tableEnv.createTemporaryTable("kafkaInputTable", sourceDescriptor)
+    /*tableEnv.connect(new Kafka()
       .version("0.11")
       .topic("sensor")
       .property("zookeeper.connect", "localhost:2181")
@@ -35,7 +46,7 @@ object KafkaPipelineTest {
         .field("timestamp", DataTypes.BIGINT())
         .field("temperature", DataTypes.DOUBLE())
       )
-      .createTemporaryTable("kafkaInputTable")
+      .createTemporaryTable("kafkaInputTable")*/
 
     // 3. 查询转换
     // 3.1 简单转换
@@ -50,7 +61,7 @@ object KafkaPipelineTest {
       .select('id, 'id.count as 'count)
 
     // 4. 输出到kafka
-    tableEnv.connect(new Kafka()
+    /*tableEnv.connect(new Kafka()
       .version("0.11")
       .topic("sinktest")
       .property("zookeeper.connect", "localhost:2181")
@@ -61,9 +72,19 @@ object KafkaPipelineTest {
         .field("id", DataTypes.STRING())
         .field("temp", DataTypes.DOUBLE())
       )
-      .createTemporaryTable("kafkaOutputTable")
-
-    resultTable.insertInto("kafkaOutputTable")
+      .createTemporaryTable("kafkaOutputTable")*/
+    val sinkDescriptor: TableDescriptor = TableDescriptor.forConnector("kafka")
+      .schema(Schema.newBuilder
+        .column("id", DataTypes.STRING)
+        .column("temp", DataTypes.DOUBLE)
+        .build)
+      .option("topic", "sinkTest")
+      .option("properties.bootstrap.servers", "localhost:2181")
+      .option("properties.group.id", "testGroup")
+      .format("csv")
+      .build
+    tableEnv.createTemporaryTable("kafkaOutputTable", sinkDescriptor)
+    resultTable.executeInsert("kafkaOutputTable")
 
     env.execute("kafka pipeline test")
   }

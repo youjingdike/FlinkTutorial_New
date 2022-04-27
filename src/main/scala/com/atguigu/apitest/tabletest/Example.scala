@@ -3,7 +3,7 @@ package com.atguigu.apitest.tabletest
 import com.atguigu.apitest.SensorReading
 import org.apache.flink.streaming.api.scala._
 import org.apache.flink.table.api.Table
-import org.apache.flink.table.api.scala._
+import org.apache.flink.table.api.bridge.scala._
 
 /**
   * Copyright (c) 2018-2028 hr All Rights Reserved

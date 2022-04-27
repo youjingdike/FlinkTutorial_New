@@ -5,12 +5,8 @@ import org.apache.flink.api.java.typeutils.TupleTypeInfo;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.api.Table;
-import org.apache.flink.table.api.java.StreamTableEnvironment;
-import org.apache.flink.table.descriptors.Csv;
-import org.apache.flink.table.descriptors.Elasticsearch;
-import org.apache.flink.table.descriptors.FileSystem;
-import org.apache.flink.table.descriptors.Json;
-import org.apache.flink.table.descriptors.Schema;
+import org.apache.flink.table.api.TableDescriptor;
+import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.types.Row;
 
 import java.net.URL;
@@ -27,15 +23,16 @@ public class EsOutputTest {
         URL resource = FileOutputTest.class.getResource("/sensor.txt");
         String filePath = resource.getPath().toString();
 
-        tableEnv.connect(new FileSystem().path(filePath))
-                .withFormat(new Csv())
-                .withSchema(new Schema()
-                        .field("id", DataTypes.STRING())
-                        .field("timestamp",DataTypes.BIGINT())
-                        .field("temp",DataTypes.DOUBLE())
-//                        .field("pt",DataTypes.TIMESTAMP(3)).proctime()
-                )
-                .createTemporaryTable("inputTable");
+        final TableDescriptor sourceDescriptor = TableDescriptor.forConnector("filesystem")
+                .schema(org.apache.flink.table.api.Schema.newBuilder()
+                        .column("id", DataTypes.STRING())
+                        .column("timestamp", DataTypes.BIGINT())
+                        .column("temperature", DataTypes.DOUBLE())
+                        .build())
+                .option("path", filePath)
+                .format("csv")
+                .build();
+        tableEnv.createTemporaryTable("inputTable",sourceDescriptor);
 
         // 3. 转换操作
         // 3.1 简单转换
@@ -50,7 +47,7 @@ public class EsOutputTest {
                 .select("id,id.count as cnt");
 
         // 4. 输出到es
-        tableEnv.connect(new Elasticsearch()
+        /*tableEnv.connect(new Elasticsearch()
                 .version("6")
                 .host("localhost", 9200, "http")
                 .index("sensor")
@@ -62,9 +59,18 @@ public class EsOutputTest {
                         .field("id", DataTypes.STRING())
                         .field("count", DataTypes.BIGINT())
                 )
-                .createTemporaryTable("esOutputTable");
-
-        aggTable.insertInto("esOutputTable");
+                .createTemporaryTable("esOutputTable");*/
+        final TableDescriptor sinkDescriptor = TableDescriptor.forConnector("elasticsearch-7")
+                .schema(org.apache.flink.table.api.Schema.newBuilder()
+                        .column("id", DataTypes.STRING())
+                        .column("count", DataTypes.BIGINT())
+                        .build())
+                .option("hosts", "http://localhost:9200")
+                .option("index","sensor")
+                .format("json")
+                .build();
+        tableEnv.createTemporaryTable("esOutputTable",sinkDescriptor);
+        aggTable.executeInsert("esOutputTable");
 
         tableEnv.toAppendStream(resultTable,new TupleTypeInfo<>(Types.STRING,Types.DOUBLE)).print("result");
         tableEnv.toRetractStream(aggTable, Row.class).print("agg");
