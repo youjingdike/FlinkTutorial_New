@@ -60,6 +60,22 @@ public class TransformTest {
         DataStream<SensorReading> lowStream = splitStream.select("low");
         DataStream<SensorReading> allStream = splitStream.select("high", "low");
 
+        SplitStream<String> splitStream1 = inputStream.split(new OutputSelector<String>() {
+            @Override
+            public Iterable<String> select(String value) {
+                List<String> output = new ArrayList<String>();
+                if (value.length() > 30) {
+                    output.add("long");
+                } else {
+                    output.add("short");
+                }
+                return output;
+            }
+        });
+        DataStream<String> longStream = splitStream1.select("long");
+        DataStream<String> shortStream = splitStream1.select("short");
+
+
         SingleOutputStreamOperator<Tuple2<String, Double>> highWarningStream = highStream.map(new MapFunction<SensorReading, Tuple2<String, Double>>() {
             @Override
             public Tuple2<String, Double> map(SensorReading value) throws Exception {
