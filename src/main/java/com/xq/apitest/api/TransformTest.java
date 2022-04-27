@@ -57,8 +57,8 @@ public class TransformTest {
         DataStream<SensorReading> highStream = splitStream.select("high");
         DataStream<SensorReading> lowStream = splitStream.select("low");
         DataStream<SensorReading> allStream = splitStream.select("high", "low");*/
-        OutputTag<SensorReading> lowOutputTag = new OutputTag<SensorReading>("low") {};
-        OutputTag<SensorReading> highOutputTag = new OutputTag<SensorReading>("high") {};
+        OutputTag<SensorReading> lowOutputTag = new OutputTag("low") {};
+        OutputTag<SensorReading> highOutputTag = new OutputTag("high") {};
         SingleOutputStreamOperator<SensorReading> process = dataStream.process(new ProcessFunction<SensorReading, SensorReading>() {
             @Override
             public void processElement(SensorReading value, ProcessFunction<SensorReading, SensorReading>.Context ctx, Collector<SensorReading> collector) throws Exception {
@@ -69,6 +69,20 @@ public class TransformTest {
                 }
             }
         });
+        OutputTag<String> longOutputTag = new OutputTag("long") {};
+        OutputTag<String> shortOutputTag = new OutputTag("short") {};
+        SingleOutputStreamOperator<String> processStream = inputStream.process(new ProcessFunction<String, String>() {
+            @Override
+            public void processElement(String s, ProcessFunction<String, String>.Context context, Collector<String> collector) throws Exception {
+                if (s.length() > 30) {
+                    context.output(longOutputTag, s);
+                } else {
+                    context.output(shortOutputTag, s);
+                }
+            }
+        });
+        DataStream<String> longSideOutput = processStream.getSideOutput(longOutputTag);
+        DataStream<String> shortSideOutput = processStream.getSideOutput(shortOutputTag);
 
         SingleOutputStreamOperator<Tuple2<String, Double>> highWarningStream = process.getSideOutput(highOutputTag).map(new MapFunction<SensorReading, Tuple2<String, Double>>() {
             @Override
