@@ -52,13 +52,16 @@ public class TableApiTest {
 
         // 2. 连接外部系统，读取数据，注册表
         // 2.1 读取文件
-        URL resource = TableApiTest.class.getResource("/sensor.txt");
+        URL resource = TableApiTest.class.getResource("/sensor1.txt");
         String filePath = resource.getPath();
         final TableDescriptor sourceDescriptor = TableDescriptor.forConnector("filesystem")
                 .schema(Schema.newBuilder()
                         .column("id", DataTypes.STRING())
                         .column("timestamp", DataTypes.BIGINT())
                         .column("temperature", DataTypes.DOUBLE())
+                        .column("rowtime", DataTypes.TIMESTAMP(3))
+                        .columnByExpression("proctime","PROCTIME()")
+                        .watermark("rowtime","rowtime - INTERVAL '5' SECOND")
                         .build())
                 .option("path", filePath)
                 .format("csv")
@@ -88,7 +91,7 @@ public class TableApiTest {
         // 3.1 使用table api
         final Table sensorTable = tableEnv.from("inputTable");
         Table resultTable = sensorTable
-                .select("id,temperature")
+                .select("id,temperature,rowtime,proctime")
                 .filter("id === 'sensor_1'");
 
         // 3.2 SQL
@@ -107,7 +110,7 @@ public class TableApiTest {
         }
 
 //        tableEnv.toDataStream(resultTable,new TupleTypeInfo<>(Types.STRING,Types.DOUBLE))
-        tableEnv.toAppendStream(resultTable,new TupleTypeInfo<>(Types.STRING,Types.DOUBLE)).print("result");
+        tableEnv.toAppendStream(resultTable,new TupleTypeInfo<>(Types.STRING,Types.DOUBLE,Types.SQL_TIMESTAMP,Types.SQL_TIMESTAMP)).print("result");
 
         DataStream<Tuple> tupleDataStream = tableEnv.toAppendStream(resultSqlTable, new TupleTypeInfo<>(Types.STRING, Types.DOUBLE));
         tupleDataStream.print("sql");
