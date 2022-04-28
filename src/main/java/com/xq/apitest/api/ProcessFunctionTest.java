@@ -23,12 +23,12 @@ public class ProcessFunctionTest {
         env.setParallelism(1);
 
         URL resource = ProcessFunctionTest.class.getResource("/sensor.txt");
-//        DataStreamSource<String> inputStream = env.readTextFile(resource.getPath().toString());
-        DataStreamSource<String> inputStream = env.socketTextStream("localhost", 9999);
+        DataStreamSource<String> inputStream = env.readTextFile(resource.getPath());
+//        DataStreamSource<String> inputStream = env.socketTextStream("localhost", 9999);
 
         SingleOutputStreamOperator<SensorReading> dataStream = inputStream.map(new MapFunction<String, SensorReading>() {
             @Override
-            public SensorReading map(String value) throws Exception {
+            public SensorReading map(String value) {
                 String[] split = value.split(",");
                 return new SensorReading(split[0].trim(), Long.parseLong(split[1].trim()), Double.parseDouble(split[2].trim()));
             }
@@ -38,12 +38,12 @@ public class ProcessFunctionTest {
 //                .keyBy("id")  //如果用属性名，对应的key的泛型是Tuple
                 .keyBy(new KeySelector<SensorReading, String>() {
                     @Override
-                    public String getKey(SensorReading value) throws Exception {
+                    public String getKey(SensorReading value) {
                         return value.getId();
                     }
                 })
-//                .process(new MyProFunc());
-                .process(new TempIncreWaining(5*1000L));
+                .process(new MyProFunc());
+//                .process(new TempIncreWaining(5*1000L));
 
         process.print("process");
         env.execute("test process func");
@@ -88,7 +88,7 @@ class TempIncreWaining extends KeyedProcessFunction<String, SensorReading, Strin
     }
 
     @Override
-    public void onTimer(long timestamp, OnTimerContext ctx, Collector<String> out) throws Exception {
+    public void onTimer(long timestamp, OnTimerContext ctx, Collector<String> out) {
         out.collect("传感器" + ctx.getCurrentKey() + "的温度连续" + interval/1000 + "秒连续上升");
         System.out.println("`````````onTimer:"+timestamp);
         timerTsState.clear();
@@ -97,10 +97,9 @@ class TempIncreWaining extends KeyedProcessFunction<String, SensorReading, Strin
     /**
      * 需要在processingTimeService里面注册时间服务
      * @param timestamp
-     * @throws Exception
      */
     @Override
-    public void onProcessingTime(long timestamp) throws Exception {
+    public void onProcessingTime(long timestamp) {
         System.out.println("~~~~~~~~~~~~~~~`onProcessingTime:"+timestamp);
     }
 }
@@ -110,12 +109,13 @@ class MyProFunc extends KeyedProcessFunction<String, SensorReading, String> {
     private ValueState<Integer> myState;
 
     @Override
-    public void open(Configuration parameters) throws Exception {
+    public void open(Configuration parameters) {
         myState = getRuntimeContext().getState(new ValueStateDescriptor<Integer>("my-state", Integer.class));
     }
 
     @Override
-    public void processElement(SensorReading value, Context ctx, Collector<String> out) throws Exception {
+    public void processElement(SensorReading value, Context ctx, Collector<String> out) {
+        System.out.println("value:"+value);
         System.out.println(ctx.getCurrentKey());
         System.out.println(ctx.timestamp());
         System.out.println(ctx.timerService().currentWatermark());
@@ -126,7 +126,7 @@ class MyProFunc extends KeyedProcessFunction<String, SensorReading, String> {
     }
 
     @Override
-    public void onTimer(long timestamp, OnTimerContext ctx, Collector<String> out) throws Exception {
+    public void onTimer(long timestamp, OnTimerContext ctx, Collector<String> out) {
         System.out.println("执行timer");
     }
 }

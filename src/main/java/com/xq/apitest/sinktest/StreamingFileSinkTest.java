@@ -6,6 +6,7 @@ import org.apache.flink.api.common.serialization.SimpleStringEncoder;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.formats.parquet.avro.ParquetAvroWriters;
 import org.apache.flink.runtime.state.filesystem.FsStateBackend;
+import org.apache.flink.runtime.state.hashmap.HashMapStateBackend;
 import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
@@ -30,8 +31,9 @@ public class StreamingFileSinkTest {
         env.setParallelism(1);
         env.enableCheckpointing(3000, CheckpointingMode.EXACTLY_ONCE);
 //        env.setStateBackend(new FsStateBackend("file:///Users/xingqian/flink_tst/chkpoint"));
-        env.setStateBackend(new FsStateBackend("hdfs://localhost:9000/flink/chkpoint"));
-
+//        env.setStateBackend(new FsStateBackend("hdfs://localhost:9000/flink/chkpoint"));
+        env.setStateBackend(new HashMapStateBackend());
+        env.getCheckpointConfig().setCheckpointStorage("hdfs://localhost:9000/flink/chkpoint");
         /*URL resource = StreamingFileSinkTest.class.getResource("/sensor.txt");
         DataStreamSource<String> inputStream = env.readTextFile(resource.getPath().toString());
         SingleOutputStreamOperator<SensorReading> dataStream = inputStream.map(new MapFunction<String, SensorReading>() {

@@ -19,7 +19,7 @@ public class RedisSinkTest {
         env.setParallelism(1);
 
         URL resource = RedisSinkTest.class.getResource("/sensor.txt");
-        DataStreamSource<String> inputStream = env.readTextFile(resource.getPath().toString());
+        DataStreamSource<String> inputStream = env.readTextFile(resource.getPath());
         SingleOutputStreamOperator<SensorReading> sensorReadingStream = inputStream.map(new MapFunction<String, SensorReading>() {
             @Override
             public SensorReading map(String value) throws Exception {

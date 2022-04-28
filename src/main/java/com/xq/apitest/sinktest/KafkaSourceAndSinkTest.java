@@ -4,6 +4,7 @@ import com.xq.apitest.pojo.SensorReading;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.serialization.DeserializationSchema;
+import org.apache.flink.api.common.serialization.SimpleStringEncoder;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.configuration.ConfigConstants;
@@ -16,9 +17,11 @@ import org.apache.flink.connector.kafka.sink.KafkaSinkBuilder;
 import org.apache.flink.connector.kafka.source.KafkaSource;
 import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
 import org.apache.flink.connector.kafka.source.reader.deserializer.KafkaRecordDeserializationSchema;
+import org.apache.flink.core.fs.Path;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.sink.filesystem.StreamingFileSink;
 import org.apache.flink.streaming.connectors.kafka.partitioner.FlinkFixedPartitioner;
 
 import java.io.IOException;
@@ -101,8 +104,11 @@ public class KafkaSourceAndSinkTest {
         });*/
 
         // 直接写入文件
-        dataStream.writeAsText("D:\\code\\FlinkTutorial_1.10_New\\src\\main\\resources\\out");
-
+//        dataStream.writeAsText("D:\\code\\FlinkTutorial_1.10_New\\src\\main\\resources\\out");
+        dataStream.addSink( StreamingFileSink.forRowFormat(
+                new Path("D:\\code\\FlinkTutorial_1.10\\src\\main\\resources\\out1"),
+                new SimpleStringEncoder<String>("UTF-8")
+        ).build());
 //        dataStream.addSink( StreamingFileSink.forRowFormat(
 ////                new Path("D:\\code\\FlinkTutorial_1.10\\src\\main\\resources\\out1"),
 //                new Path("hdfs://node101:9000/flink/hdfsSink"),

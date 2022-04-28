@@ -10,14 +10,16 @@ import org.apache.flink.streaming.api.functions.ProcessFunction;
 import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
 
+import java.net.URL;
+
 public class SideOutputTest {
     public static void main(String[] args) throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
 
-//        URL resource = ProcessFunctionTest.class.getResource("/sensor.txt");
-//        DataStreamSource<String> inputStream = env.readTextFile(resource.getPath().toString());
-        DataStreamSource<String> inputStream = env.socketTextStream("localhost", 9999);
+        URL resource = ProcessFunctionTest.class.getResource("/sensor.txt");
+        DataStreamSource<String> inputStream = env.readTextFile(resource.getPath().toString());
+//        DataStreamSource<String> inputStream = env.socketTextStream("localhost", 9999);
 
         SingleOutputStreamOperator<SensorReading> dataStream = inputStream.map(new MapFunction<String, SensorReading>() {
             @Override

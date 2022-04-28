@@ -7,10 +7,13 @@ import org.apache.flink.api.common.state.*;
 import org.apache.flink.api.common.time.Time;
 import org.apache.flink.api.common.typeinfo.TypeHint;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.runtime.state.hashmap.HashMapStateBackend;
 import org.apache.flink.runtime.state.memory.MemoryStateBackend;
+import org.apache.flink.runtime.state.storage.JobManagerCheckpointStorage;
 import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.KeyedStream;
@@ -30,11 +33,14 @@ public class StateTest {
         env.setParallelism(1);
         //    env.setStateBackend(new FsStateBackend("", true))
 //        env.setStateBackend(new RocksDBStateBackend("file:////D://checkpoint"));
-        env.setStateBackend(new MemoryStateBackend());
+//        env.setStateBackend(new MemoryStateBackend());
+        env.setStateBackend(new HashMapStateBackend());
 //        env.enableCheckpointing(60*1000L);//等价于：checkpointConfig.setCheckpointInterval(60*1000L);
 
-
         CheckpointConfig checkpointConfig = env.getCheckpointConfig();
+        checkpointConfig.setCheckpointStorage(new JobManagerCheckpointStorage());
+
+
         checkpointConfig.setCheckpointingMode(CheckpointingMode.EXACTLY_ONCE);
         checkpointConfig.setCheckpointInterval(60*1000L);
         checkpointConfig.setCheckpointTimeout(60000);
@@ -47,17 +53,23 @@ public class StateTest {
         env.setRestartStrategy(RestartStrategies.failureRateRestart(5, Time.minutes(5),Time.seconds(10)));
 
         URL resource = StateTest.class.getResource("/sensor.txt");
-        DataStreamSource<String> inputStream = env.readTextFile(resource.getPath().toString());
+        DataStreamSource<String> inputStream = env.readTextFile(resource.getPath());
         SingleOutputStreamOperator<SensorReading> dataStream = inputStream.map(new MapFunction<String, SensorReading>() {
             @Override
-            public SensorReading map(String value) throws Exception {
+            public SensorReading map(String value) {
                 String[] split = value.split(",");
                 return new SensorReading(split[0].trim(), Long.parseLong(split[1].trim()), Double.parseDouble(split[2].trim()));
             }
         });
 
-        KeyedStream<SensorReading, Tuple> keyedStream = dataStream
-                .keyBy("id");
+        KeyedStream<SensorReading, String> keyedStream = dataStream
+//                .keyBy("id");
+                .keyBy(new KeySelector<SensorReading, String>() {
+                    @Override
+                    public String getKey(SensorReading sensorReading) throws Exception {
+                        return sensorReading.getId();
+                    }
+                });
 
 //        SingleOutputStreamOperator<String> mapStream = keyedStream
 //                .map(new MyRichMapper())
@@ -172,7 +184,7 @@ class MyRichMapper extends RichMapFunction<SensorReading, String> {
     public String map(SensorReading sensorReading1) throws Exception {
         Integer value1 = valueState.value();
         if (value1 != null) {
-            System.out.println("valueState:"+sensorReading1.getId()+ "->" + value1.toString());
+            System.out.println("valueState:"+sensorReading1.getId()+ "->" + value1);
             valueState.update(++value1);
         } else {
             valueState.update(1);
