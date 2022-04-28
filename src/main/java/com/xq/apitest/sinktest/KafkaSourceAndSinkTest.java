@@ -8,12 +8,18 @@ import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.configuration.ConfigConstants;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.connector.base.DeliveryGuarantee;
+import org.apache.flink.connector.kafka.sink.KafkaRecordSerializationSchema;
+import org.apache.flink.connector.kafka.sink.KafkaRecordSerializationSchemaBuilder;
+import org.apache.flink.connector.kafka.sink.KafkaSink;
+import org.apache.flink.connector.kafka.sink.KafkaSinkBuilder;
 import org.apache.flink.connector.kafka.source.KafkaSource;
 import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
 import org.apache.flink.connector.kafka.source.reader.deserializer.KafkaRecordDeserializationSchema;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.connectors.kafka.partitioner.FlinkFixedPartitioner;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -104,6 +110,17 @@ public class KafkaSourceAndSinkTest {
 //        ).build());
         /*dataStream.addSink(new FlinkKafkaProducer011<String>("node102:9092","test",new SimpleStringSchema()))
         .name("kafka sink");*/
+        /*KafkaRecordSerializationSchemaBuilder<String> serSchema= KafkaRecordSerializationSchema.builder()
+                .setTopic("sinktest")
+                .setValueSerializationSchema(new SimpleStringSchema())
+                .setPartitioner(new FlinkFixedPartitioner());
+        KafkaSinkBuilder<String> kafkaSinkBuilder= KafkaSink.<String>builder()
+//      .setKafkaProducerConfig(properties)
+                .setBootstrapServers("localhost:9092")
+                .setDeliverGuarantee(DeliveryGuarantee.EXACTLY_ONCE)
+                .setRecordSerializer(serSchema.build())
+                .setTransactionalIdPrefix("xq");
+        dataStream.sinkTo(kafkaSinkBuilder.build()).name("tstsink").uid("tstsink");*/
         env.execute("test kafka source and sink job");
     }
 }
