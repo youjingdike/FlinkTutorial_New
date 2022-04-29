@@ -12,6 +12,8 @@ import org.apache.flink.types.Row;
 
 import java.net.URL;
 
+import static org.apache.flink.table.api.Expressions.$;
+
 public class Example {
     public static void main(String[] args) throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
@@ -30,7 +32,11 @@ public class Example {
         Table table = tableEnv.fromDataStream(dataStream);
 
         // 调用table api进行转换
-        Table filter = table.select("id,temperature").filter("id == 'sensor_1'");
+        Table filter = table
+//                .select("id,temperature")
+//                .filter("id == 'sensor_1'");
+                .select($("id"),$("temperature"))
+                .filter($("id").isEqual("sensor_1"));
         filter.printSchema();
         DataStream<Row> rowDataStream = tableEnv.toAppendStream(filter, Row.class);
         rowDataStream.print("table");
@@ -41,12 +47,12 @@ public class Example {
         Table res1 = tableEnv.sqlQuery("select id,temperature from t1 where id = 'sensor_1'");
         Table res2 = tableEnv.sqlQuery("select id,temperature from t2 where id = 'sensor_1'");
 
-        DataStream<Row> rowDataStream1 = tableEnv.toAppendStream(res1, Row.class);
-        DataStream<Row> rowDataStream2 = tableEnv.toAppendStream(res2, Row.class);
+        DataStream<Row> rowDataStream1 = tableEnv.toDataStream(res1, Row.class);
+        DataStream<Row> rowDataStream2 = tableEnv.toDataStream(res2, Row.class);
 
         rowDataStream1.print("t1");
         rowDataStream2.print("t2");
 
-        tableEnv.execute("table test");
+        env.execute("table test");
     }
 }

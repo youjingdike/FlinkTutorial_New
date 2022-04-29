@@ -11,6 +11,8 @@ import org.apache.flink.types.Row;
 
 import java.net.URL;
 
+import static org.apache.flink.table.api.Expressions.$;
+
 public class EsOutputTest {
     public static void main(String[] args) throws Exception {
         //1.创建环境
@@ -21,7 +23,7 @@ public class EsOutputTest {
 
         // 2. 连接文件，注册表
         URL resource = FileOutputTest.class.getResource("/sensor.txt");
-        String filePath = resource.getPath().toString();
+        String filePath = resource.getPath();
 
         final TableDescriptor sourceDescriptor = TableDescriptor.forConnector("filesystem")
                 .schema(org.apache.flink.table.api.Schema.newBuilder()
@@ -38,13 +40,13 @@ public class EsOutputTest {
         // 3.1 简单转换
         final Table sensorTable = tableEnv.from("inputTable");
         Table resultTable = sensorTable
-                .select("id,temp")
-                .filter("id === 'sensor_1'");
+                .select($("id"),$("temp"))
+                .filter($("id").isEqual("sensor_1"));
 
         //3.2 聚合操作
         Table aggTable = sensorTable
-                .groupBy("id")// 基于id分组
-                .select("id,id.count as cnt");
+                .groupBy($("id"))// 基于id分组
+                .select($("id"),$("id").count().as("cnt"));
 
         // 4. 输出到es
         /*tableEnv.connect(new Elasticsearch()
@@ -72,9 +74,9 @@ public class EsOutputTest {
         tableEnv.createTemporaryTable("esOutputTable",sinkDescriptor);
         aggTable.executeInsert("esOutputTable");
 
-        tableEnv.toAppendStream(resultTable,new TupleTypeInfo<>(Types.STRING,Types.DOUBLE)).print("result");
-        tableEnv.toRetractStream(aggTable, Row.class).print("agg");
+        tableEnv.toDataStream(resultTable).print("result");
+        tableEnv.toChangelogStream(aggTable).print("agg");
 
-        tableEnv.execute("es output test");
+        env.execute("es output test");
     }
 }

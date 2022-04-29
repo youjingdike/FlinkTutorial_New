@@ -14,7 +14,7 @@ public class StreamWordCount {
     public static void main(String[] args) throws Exception {
 //        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         Configuration conf = new Configuration();
-        conf.setBoolean(ConfigConstants.LOCAL_START_WEBSERVER,true);
+//        conf.setBoolean(ConfigConstants.LOCAL_START_WEBSERVER,true);
         StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(conf);
         env.setParallelism(8);
         env.disableOperatorChaining();

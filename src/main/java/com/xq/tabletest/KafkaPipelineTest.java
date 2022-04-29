@@ -9,6 +9,8 @@ import org.apache.flink.table.api.TableDescriptor;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.types.Row;
 
+import static org.apache.flink.table.api.Expressions.$;
+
 public class KafkaPipelineTest {
     public static void main(String[] args) throws Exception {
         // 1. 创建环境
@@ -44,13 +46,13 @@ public class KafkaPipelineTest {
         // 3.1 简单转换
         final Table sensorTable = tableEnv.from("kafkaInputTable");
         Table resultTable = sensorTable
-                .select("id,temperature")
-                .filter("id === 'sensor_1'");
+                .select($("id"),$("temperature"))
+                .filter($("id").isEqual("sensor_1"));
 
         //3.2 聚合操作
         Table aggTable = sensorTable
-                .groupBy("id")// 基于id分组
-                .select("id,id.count as cnt");
+                .groupBy($("id"))// 基于id分组
+                .select($("id"),$("id").count().as("cnt"));
 
         // 2. 从kafka读取数据
         /*tableEnv.connect(new Kafka()
@@ -77,9 +79,9 @@ public class KafkaPipelineTest {
         tableEnv.createTemporaryTable("kafkaOutputTable",sinkDescriptor);
         resultTable.executeInsert("kafkaOutputTable");
 
-        tableEnv.toAppendStream(resultTable,new TupleTypeInfo<>(Types.STRING,Types.DOUBLE)).print("result");
-        tableEnv.toRetractStream(aggTable, Row.class).print("agg");
+        tableEnv.toDataStream(resultTable).print("result");
+        tableEnv.toChangelogStream(aggTable).print("agg");
 
-        tableEnv.execute("kafka pipeline test");
+        env.execute("kafka pipeline test");
     }
 }

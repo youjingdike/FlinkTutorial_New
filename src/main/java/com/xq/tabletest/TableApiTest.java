@@ -19,6 +19,8 @@ import org.apache.flink.types.Row;
 import java.net.URL;
 import java.util.Arrays;
 
+import static org.apache.flink.table.api.Expressions.$;
+
 public class TableApiTest {
     public static void main(String[] args) throws Exception {
         /*EnvironmentSettings settings = EnvironmentSettings
@@ -91,8 +93,8 @@ public class TableApiTest {
         // 3.1 使用table api
         final Table sensorTable = tableEnv.from("inputTable");
         Table resultTable = sensorTable
-                .select("id,temperature,rowtime,proctime")
-                .filter("id === 'sensor_1'");
+                .select($("id"),$("temperature"),$("rowtime"),$("proctime"))
+                .filter($("id").isEqual("sensor_1"));
 
         // 3.2 SQL
         Table resultSqlTable = tableEnv.sqlQuery(
@@ -110,9 +112,10 @@ public class TableApiTest {
         }
 
 //        tableEnv.toDataStream(resultTable,new TupleTypeInfo<>(Types.STRING,Types.DOUBLE))
-        tableEnv.toAppendStream(resultTable,new TupleTypeInfo<>(Types.STRING,Types.DOUBLE,Types.SQL_TIMESTAMP,Types.SQL_TIMESTAMP)).print("result");
-
-        DataStream<Tuple> tupleDataStream = tableEnv.toAppendStream(resultSqlTable, new TupleTypeInfo<>(Types.STRING, Types.DOUBLE));
+//        tableEnv.toAppendStream(resultTable,new TupleTypeInfo<>(Types.STRING,Types.DOUBLE,Types.SQL_TIMESTAMP,Types.SQL_TIMESTAMP)).print("result");
+        tableEnv.toDataStream(resultTable).print("result");
+//        DataStream<Tuple> tupleDataStream = tableEnv.toAppendStream(resultSqlTable, new TupleTypeInfo<>(Types.STRING, Types.DOUBLE));
+        DataStream tupleDataStream = tableEnv.toDataStream(resultSqlTable);
         tupleDataStream.print("sql");
 
         DataStream<Row> rowDataStream = tableEnv.toDataStream(resultSqlTable, Row.class);

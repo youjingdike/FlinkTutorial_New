@@ -14,6 +14,7 @@ import org.apache.flink.types.Row;
 import java.net.URL;
 
 import static org.apache.flink.table.api.DataTypes.TIMESTAMP;
+import static org.apache.flink.table.api.Expressions.$;
 
 public class FileOutputTest {
     public static void main(String[] args) throws Exception {
@@ -24,7 +25,7 @@ public class FileOutputTest {
 
         // 2. 连接文件，注册表
         URL resource = FileOutputTest.class.getResource("/sensor.txt");
-        String filePath = resource.getPath().toString();
+        String filePath = resource.getPath();
 
         /*tableEnv.connect(new FileSystem().path(filePath))
             .withFormat(new Csv())
@@ -39,8 +40,8 @@ public class FileOutputTest {
                 .schema(Schema.newBuilder()
                         .column("id", DataTypes.STRING())
                         .column("timestamp", DataTypes.BIGINT())
-                        .column("temperature", DataTypes.DOUBLE())
-                        .column("pt", TIMESTAMP(3))
+                        .column("temp", DataTypes.DOUBLE())
+                        .columnByExpression("pt", "PROCTIME()")
                         .build())
                 .option("path", filePath)
                 .format(FormatDescriptor.forFormat("csv")
@@ -52,17 +53,18 @@ public class FileOutputTest {
         // 3.1 简单转换
         final Table sensorTable = tableEnv.from("inputTable");
         Table resultTable = sensorTable
-                .select("id,temp")
-                .filter("id === 'sensor_1'");
+                .select($("id"),$("temp"))
+                .filter($("id").isEqual("sensor_1"));
 
         //3.2 聚合操作
         Table aggTable = sensorTable
-                .groupBy("id")// 基于id分组
-                .select("id,id.count as cnt");
+                .groupBy($("id"))// 基于id分组
+//                .select("id,id.count as cnt");
+                .select($("id"),$("id").count().as("cnt"));
 
         // 4. 输出到文件
         // 注册输出表
-        String outputPath = "D:\\code\\FlinkTutorial_1.10_New\\src\\main\\resources\\output.txt";
+        String outputPath = "/Users/xingqian/IdeaProjects/FlinkTutorial_1.10_New/src/main/resources/out";
         /*tableEnv.connect(new FileSystem().path(outputPath))
                 .withFormat(new Csv())
                 .withSchema(new Schema()
@@ -75,19 +77,18 @@ public class FileOutputTest {
                 .schema(Schema.newBuilder()
                         .column("id", DataTypes.STRING())
                         .column("temperature", DataTypes.DOUBLE())
-                        .column("cnt", DataTypes.DOUBLE())
                         .build())
                 .option("path", outputPath)
                 .format("csv")
                 .build();
         tableEnv.createTemporaryTable("outputTable",sinkDescriptor);
 
-        resultTable.insertInto("outputTable");
+        resultTable.executeInsert("outputTable");
 //        aggTable.insertInto("outputTable");//会报错：AppendStreamTableSink requires that Table has only insert changes.
 
-        tableEnv.toAppendStream(resultTable,new TupleTypeInfo<>(Types.STRING,Types.DOUBLE)).print("result");
-        tableEnv.toRetractStream(aggTable, Row.class).print("agg");
+        tableEnv.toDataStream(resultTable).print("result");
+        tableEnv.toChangelogStream(aggTable).print("agg");
 
-        tableEnv.execute("table api test");
+        env.execute("table api test");
     }
 }

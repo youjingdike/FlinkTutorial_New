@@ -1,7 +1,9 @@
 package com.atguigu.apitest.tabletest.udftest
 
 import com.atguigu.apitest.SensorReading
+import com.atguigu.apitest.tabletest.udftest.AggregateFunctionTest.getClass
 import com.xq.tabletest.TableApiTest
+import org.apache.flink.api.common.eventtime.{SerializableTimestampAssigner, WatermarkStrategy}
 import org.apache.flink.streaming.api.TimeCharacteristic
 import org.apache.flink.streaming.api.functions.timestamps.BoundedOutOfOrdernessTimestampExtractor
 import org.apache.flink.streaming.api.scala._
@@ -12,6 +14,7 @@ import org.apache.flink.table.functions.ScalarFunction
 import org.apache.flink.types.Row
 
 import java.net.URL
+import java.time.Duration
 
 /**
   * Copyright (c) 2018-2028 hr All Rights Reserved
@@ -26,30 +29,31 @@ object ScalarFunctionTest {
   def main(args: Array[String]): Unit = {
     val env = StreamExecutionEnvironment.getExecutionEnvironment
     env.setParallelism(1)
-    env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime)
+//    env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime)
 
     val settings = EnvironmentSettings.newInstance()
-      .useBlinkPlanner()
       .inStreamingMode()
       .build()
     val tableEnv = StreamTableEnvironment.create(env, settings)
 
     // 读取数据
-    val resource: URL = classOf[TableApiTest].getResource("/sensor.txt")
-    val inputPath: String = resource.getPath.toString
+    val resource: URL = getClass.getClassLoader.getResource("sensor.txt")
+    val inputPath: String = resource.getPath
 //    val inputPath = "D:\\Projects\\BigData\\FlinkTutorial\\src\\main\\resources\\sensor.txt"
     val inputStream = env.readTextFile(inputPath)
     //    val inputStream = env.socketTextStream("localhost", 7777)
 
+    val watermarkStrategy = WatermarkStrategy.forBoundedOutOfOrderness[SensorReading](Duration.ofMillis(1000L))
+      .withTimestampAssigner(new SerializableTimestampAssigner[SensorReading] {
+        override def extractTimestamp(element: SensorReading, recordTimestamp: Long): Long = element.timestamp
+      })
     // 先转换成样例类类型（简单转换操作）
     val dataStream = inputStream
       .map(data => {
         val arr = data.split(",")
         SensorReading(arr(0), arr(1).toLong, arr(2).toDouble)
       })
-      .assignTimestampsAndWatermarks(new BoundedOutOfOrdernessTimestampExtractor[SensorReading](Time.seconds(1)) {
-        override def extractTimestamp(element: SensorReading): Long = element.timestamp * 1000L
-      })
+      .assignTimestampsAndWatermarks(watermarkStrategy)
 
     val sensorTable = tableEnv.fromDataStream(dataStream, 'id, 'temperature, 'timestamp.rowtime as 'ts)
 
@@ -63,7 +67,7 @@ object ScalarFunctionTest {
     // 2. sql
     // 需要在环境中注册UDF
     tableEnv.createTemporaryView("sensor", sensorTable)
-    tableEnv.registerFunction("hashCode", hashCode)
+    tableEnv.createTemporarySystemFunction("hashCode", hashCode)
     val resultSqlTable = tableEnv.sqlQuery("select id, ts, hashCode(id) from sensor")
 
     resultTable.toAppendStream[Row].print("result")
