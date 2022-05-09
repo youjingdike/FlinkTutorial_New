@@ -1,6 +1,7 @@
 package com.xq.apitest.sinktest;
 
 import com.xq.apitest.pojo.SensorReading;
+import org.apache.flink.api.common.eventtime.SerializableTimestampAssigner;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.serialization.DeserializationSchema;
@@ -26,6 +27,7 @@ import org.apache.flink.streaming.connectors.kafka.partitioner.FlinkFixedPartiti
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.time.Duration;
 import java.util.Properties;
 
 public class KafkaSourceAndSinkTest {
@@ -73,7 +75,11 @@ public class KafkaSourceAndSinkTest {
                 .setDeserializer(KafkaRecordDeserializationSchema.valueOnly(deserializationSchema))
                 .build();
 
-        DataStreamSource<SensorReading> inputStream = env.fromSource(kafkaSource, WatermarkStrategy.noWatermarks(),"kakfa source");
+        WatermarkStrategy<SensorReading> watermarkStrategy = WatermarkStrategy.<SensorReading>forBoundedOutOfOrderness(Duration.ofMillis(1000L))
+                .withTimestampAssigner((SerializableTimestampAssigner<SensorReading>) (element, recordTimestamp) -> element.getTimestamp());
+
+        DataStreamSource<SensorReading> inputStream = env.fromSource(kafkaSource, watermarkStrategy,"kakfa source");
+//        DataStreamSource<SensorReading> inputStream = env.fromSource(kafkaSource, WatermarkStrategy.noWatermarks(),"kakfa source");
 
         /*DataStreamSource<SensorReading> inputStream = env.addSource(new FlinkKafkaConsumer011<SensorReading>("sensor", new DeserializationSchema<SensorReading>() {
             @Override
