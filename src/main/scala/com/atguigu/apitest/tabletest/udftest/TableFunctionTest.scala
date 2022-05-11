@@ -80,7 +80,8 @@ object TableFunctionTest {
 
     // 2. sql
     tableEnv.createTemporaryView("sensor", sensorTable)
-    tableEnv.registerFunction("split", split)
+//    tableEnv.registerFunction("split", split)
+    tableEnv.createTemporarySystemFunction("split", split)
     val resultSqlTable = tableEnv.sqlQuery(
       """
         |select

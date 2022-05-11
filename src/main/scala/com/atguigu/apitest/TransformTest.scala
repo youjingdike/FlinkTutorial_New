@@ -38,7 +38,7 @@ object TransformTest {
 
     // 3.需要输出当前最小的温度值，以及最近的时间戳，要用reduce
     val resultStream = dataStream
-      .keyBy("id")
+      .keyBy(_.id)
 //      .reduce( (curState, newData) =>
 //        SensorReading( curState.id, newData.timestamp, curState.temperature.min(newData.temperature) )
 //      )
