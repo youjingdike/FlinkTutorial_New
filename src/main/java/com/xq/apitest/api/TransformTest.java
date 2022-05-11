@@ -34,7 +34,7 @@ public class TransformTest {
 
         // 3. 复杂聚合操作，reduce，得到当前id最小的温度值，以及最新的时间戳+1
         //如果是某个key的第一条数据，不执行该方法
-        SingleOutputStreamOperator<SensorReading> reduce = dataStream.keyBy("id")
+        SingleOutputStreamOperator<SensorReading> reduce = dataStream.keyBy((KeySelector<SensorReading, String>) value -> value.getId())
                 .reduce((ReduceFunction<SensorReading>) (cur, newData) -> {
 //                    System.out.println("cur:"+cur);
 //                    System.out.println("new:"+newData);

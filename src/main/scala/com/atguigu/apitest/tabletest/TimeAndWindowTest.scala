@@ -1,7 +1,7 @@
 package com.atguigu.apitest.tabletest
 
 import com.atguigu.apitest.SensorReading
-import com.xq.tabletest.TableApiTest
+import com.xq.tabletest.TimeAndWindowTest
 import org.apache.flink.api.common.eventtime.{SerializableTimestampAssigner, WatermarkStrategy}
 import org.apache.flink.streaming.api.TimeCharacteristic
 import org.apache.flink.streaming.api.functions.timestamps.BoundedOutOfOrdernessTimestampExtractor
@@ -37,7 +37,7 @@ object TimeAndWindowTest {
 
     // 读取数据
 //    val inputPath = "D:\\Projects\\BigData\\FlinkTutorial\\src\\main\\resources\\sensor.txt"
-    val resource: URL = classOf[TableApiTest].getResource("/sensor.txt")
+    val resource: URL = classOf[TimeAndWindowTest].getResource("/sensor.txt")
     val filePath: String = resource.getPath.toString
     val inputStream = env.readTextFile(filePath)
     //    val inputStream = env.socketTextStream("localhost", 7777)

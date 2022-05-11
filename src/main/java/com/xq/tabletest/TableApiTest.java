@@ -1,23 +1,19 @@
 package com.xq.tabletest;
 
-import org.apache.flink.api.common.typeinfo.Types;
-import org.apache.flink.api.java.tuple.Tuple;
-import org.apache.flink.api.java.typeutils.TupleTypeInfo;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.apache.flink.table.api.DataTypes;
-import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.TableDescriptor;
-import org.apache.flink.table.api.TableEnvironment;
-import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
+import org.apache.flink.table.catalog.Column;
+import org.apache.flink.table.catalog.ResolvedSchema;
 import org.apache.flink.types.Row;
 
 import java.net.URL;
-import java.util.Arrays;
+import java.util.Optional;
 
 import static org.apache.flink.table.api.Expressions.$;
 
@@ -103,12 +99,17 @@ public class TableApiTest {
 //    val inputTable: Table = tableEnv.from("kafkaInputTable")
 //    inputTable.toAppendStream[(String, Long, Double)].print()
 
-        TableSchema schema = resultSqlTable.getSchema();
-        int fieldCount = schema.getFieldCount();
-        Arrays.stream(schema.getFieldNames()).forEach(System.out::println);
+//        TableSchema schema = resultSqlTable.getSchema();
+//        int fieldCount = schema.getFieldCount();
+//        Arrays.stream(schema.getFieldNames()).forEach(System.out::println);
+        ResolvedSchema schema = resultSqlTable.getResolvedSchema();
+        int fieldCount = schema.getColumnCount();
+        schema.getColumnNames().forEach(System.out::println);
         System.out.println("~~~~~~~~~~~~~~~~~~~~");
         for (int i = 0; i < fieldCount; i++) {
-            System.out.println(schema.getFieldName(i));
+            Optional<Column> column = schema.getColumn(i);
+            System.out.println(column);
+            System.out.println(column.get().getName());
         }
 
 //        tableEnv.toDataStream(resultTable,new TupleTypeInfo<>(Types.STRING,Types.DOUBLE))
