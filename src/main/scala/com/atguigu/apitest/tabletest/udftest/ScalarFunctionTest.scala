@@ -55,7 +55,21 @@ object ScalarFunctionTest {
       })
       .assignTimestampsAndWatermarks(watermarkStrategy)
 
-    val sensorTable = tableEnv.fromDataStream(dataStream, 'id, 'temperature, 'timestamp.rowtime as 'ts)
+    val schema = Schema.newBuilder()
+      .column("id", "STRING")
+      .column("temperature", "DOUBLE")
+      //      .columnByExpression("temp1", "temperature")
+      //      .columnByExpression("temp", "cast(temperature as DOUBLE)")
+      //.column("timestamp", DataTypes.BIGINT())
+      .columnByExpression("ts", Expressions.callSql("TO_TIMESTAMP_LTZ(`timestamp`, 0)"))
+      //      .columnByExpression("ps", "PROCTIME()") //事件时间，类是字段与sql关键字冲突，要加上`号
+      //操作时间
+      //      .watermark("ts", "SOURCE_WATERMARK()")
+      //.watermark("ts", sourceWatermark())
+      .build()
+
+//    val sensorTable = tableEnv.fromDataStream(dataStream, 'id, 'temperature, 'timestamp.rowtime as 'ts)
+    val sensorTable = tableEnv.fromDataStream(dataStream, schema)
 
     // 调用自定义hash函数，对id进行hash运算
     // 1. table api

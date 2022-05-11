@@ -1,13 +1,12 @@
 package com.atguigu.apitest
 
 import java.util
-
 import org.apache.flink.api.common.functions.{RichFlatMapFunction, RichMapFunction}
 import org.apache.flink.api.common.restartstrategy.RestartStrategies
 import org.apache.flink.api.common.state._
 import org.apache.flink.api.common.time.Time
 import org.apache.flink.configuration.Configuration
-import org.apache.flink.contrib.streaming.state.RocksDBStateBackend
+import org.apache.flink.contrib.streaming.state.{EmbeddedRocksDBStateBackend, RocksDBStateBackend}
 import org.apache.flink.runtime.state.filesystem.FsStateBackend
 import org.apache.flink.streaming.api.{CheckpointingMode, TimeCharacteristic}
 import org.apache.flink.streaming.api.checkpoint.ListCheckpointed
@@ -28,10 +27,10 @@ object StateTest {
     val env = StreamExecutionEnvironment.getExecutionEnvironment
     env.setParallelism(1)
 //    env.setStateBackend(new FsStateBackend("", true))
-    env.setStateBackend(new RocksDBStateBackend(""))
+    env.setStateBackend(new EmbeddedRocksDBStateBackend())
 
     // 开启checkpoint
-    env.enableCheckpointing()
+    env.enableCheckpointing(10000L)
 
     // checkpoint的配置
     val chkpConfig = env.getCheckpointConfig

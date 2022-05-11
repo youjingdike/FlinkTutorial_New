@@ -2,8 +2,9 @@ package com.atguigu.apitest.tabletest
 
 import com.atguigu.apitest.SensorReading
 import org.apache.flink.streaming.api.scala._
-import org.apache.flink.table.api.Table
+import org.apache.flink.table.api.{AnyWithOperations, FieldExpression, Table, UnresolvedFieldExpression}
 import org.apache.flink.table.api.bridge.scala._
+import org.apache.flink.table.api._
 
 /**
   * Copyright (c) 2018-2028 hr All Rights Reserved
@@ -39,8 +40,8 @@ object Example {
 
     // 调用table api进行转换
     val resultTable = dataTable
-      .select("id, temperature")
-      .filter("id == 'sensor_1'")
+      .select($"id", $"temperature")
+      .filter('id === "sensor_1")
 
     // 直接用sql实现
     tableEnv.createTemporaryView("dataTable", dataTable)
