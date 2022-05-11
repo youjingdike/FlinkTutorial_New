@@ -75,7 +75,7 @@ class TempIncreWaining extends KeyedProcessFunction<String, SensorReading, Strin
         Double lastTemp = lastTempState.value();
         Long timerTs = timerTsState.value();
         lastTempState.update(sen.getTemperature());
-
+        ctx.timerService().registerEventTimeTimer(1000L);
         if (lastTemp!=null && timerTs==null && sen.getTemperature()>lastTemp) {
             long ts = ctx.timerService().currentProcessingTime() + interval;
             timerTsState.update(ts);

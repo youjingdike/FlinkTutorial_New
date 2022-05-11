@@ -28,7 +28,14 @@ public class Example {
         });
 
         StreamTableEnvironment tableEnv = StreamTableEnvironment.create(env);
-
+//        dataStream.keyBy();
+        dataStream.global();
+        dataStream.broadcast();
+        dataStream.forward();
+        dataStream.shuffle();
+        dataStream.rebalance();
+        dataStream.rescale();
+//        dataStream.partitionCustom();
         Table table = tableEnv.fromDataStream(dataStream);
 
         // 调用table api进行转换
@@ -38,7 +45,7 @@ public class Example {
                 .select($("id"),$("temperature"))
                 .filter($("id").isEqual("sensor_1"));
         filter.printSchema();
-        DataStream<Row> rowDataStream = tableEnv.toAppendStream(filter, Row.class);
+        DataStream<Row> rowDataStream = tableEnv.toDataStream(filter, Row.class);
         rowDataStream.print("table");
 
         tableEnv.createTemporaryView("t1",table);

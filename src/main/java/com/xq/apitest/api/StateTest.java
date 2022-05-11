@@ -11,8 +11,12 @@ import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.contrib.streaming.state.EmbeddedRocksDBStateBackend;
+import org.apache.flink.contrib.streaming.state.RocksDBStateBackend;
+import org.apache.flink.runtime.state.filesystem.FsStateBackend;
 import org.apache.flink.runtime.state.hashmap.HashMapStateBackend;
 import org.apache.flink.runtime.state.memory.MemoryStateBackend;
+import org.apache.flink.runtime.state.storage.FileSystemCheckpointStorage;
 import org.apache.flink.runtime.state.storage.JobManagerCheckpointStorage;
 import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
@@ -31,14 +35,18 @@ public class StateTest {
     public static void main(String[] args) throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
-        //    env.setStateBackend(new FsStateBackend("", true))
+//            env.setStateBackend(new FsStateBackend("", true))
 //        env.setStateBackend(new RocksDBStateBackend("file:////D://checkpoint"));
 //        env.setStateBackend(new MemoryStateBackend());
+
         env.setStateBackend(new HashMapStateBackend());
-//        env.enableCheckpointing(60*1000L);//等价于：checkpointConfig.setCheckpointInterval(60*1000L);
+//        env.setStateBackend(new EmbeddedRocksDBStateBackend());
+        env.enableCheckpointing(60*1000L);//等价于：checkpointConfig.setCheckpointInterval(60*1000L);
 
         CheckpointConfig checkpointConfig = env.getCheckpointConfig();
         checkpointConfig.setCheckpointStorage(new JobManagerCheckpointStorage());
+//        checkpointConfig.setCheckpointStorage(new FileSystemCheckpointStorage("file:///checkpoint-dir"));
+//        checkpointConfig.setCheckpointStorage("file:///checkpoint-dir");
 
 
         checkpointConfig.setCheckpointingMode(CheckpointingMode.EXACTLY_ONCE);

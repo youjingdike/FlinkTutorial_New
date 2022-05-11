@@ -1,18 +1,12 @@
 package com.xq.apitest.api;
 
-import com.xq.RandomSource;
+import com.xq.sources.RandomSource;
 import com.xq.apitest.pojo.SensorReading;
-import org.apache.flink.configuration.ConfigConstants;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.source.RichSourceFunction;
 
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Random;
 
 public class SourceTest {
     public static void main(String[] args) throws Exception {
