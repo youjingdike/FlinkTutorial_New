@@ -22,7 +22,7 @@ public class EsOutputTest {
         StreamTableEnvironment tableEnv = StreamTableEnvironment.create(env);
 
         // 2. 连接文件，注册表
-        URL resource = FileOutputTest.class.getResource("/sensor.txt");
+        URL resource = EsOutputTest.class.getResource("/sensor.txt");
         String filePath = resource.getPath();
 
         final TableDescriptor sourceDescriptor = TableDescriptor.forConnector("filesystem")
