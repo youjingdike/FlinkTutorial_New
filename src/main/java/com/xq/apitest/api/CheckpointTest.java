@@ -75,6 +75,7 @@ public class CheckpointTest {
         //这里虽然设置的是5，但是setMaxConcurrentCheckpoints设置的为4，当达到最大值5的时候，也不会立马重启任务，会等待已触发的cp,全部失败才认为任务失败重启
         checkpointConfig.setTolerableCheckpointFailureNumber(5);
 //        checkpointConfig.setTolerableCheckpointFailureNumber(0);
+//        checkpointConfig.enableUnalignedCheckpoints();
 
 //        env.setRestartStrategy(RestartStrategies.fixedDelayRestart(3,10000L));
         env.setRestartStrategy(RestartStrategies.failureRateRestart(5, Time.minutes(5),Time.seconds(10)));
