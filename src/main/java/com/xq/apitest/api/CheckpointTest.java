@@ -54,7 +54,7 @@ public class CheckpointTest {
 
         env.setStateBackend(new HashMapStateBackend());
 //        env.setStateBackend(new EmbeddedRocksDBStateBackend());
-        env.enableCheckpointing(10*1000L);//等价于：checkpointConfig.setCheckpointInterval(60*1000L);
+//        env.enableCheckpointing(10*1000L);//等价于：checkpointConfig.setCheckpointInterval(60*1000L);
 
         CheckpointConfig checkpointConfig = env.getCheckpointConfig();
 //        checkpointConfig.setCheckpointStorage(new JobManagerCheckpointStorage());
@@ -62,12 +62,13 @@ public class CheckpointTest {
 //        checkpointConfig.setCheckpointStorage("file:///checkpoint-dir");
 
 
+//        checkpointConfig.setCheckpointingMode(CheckpointingMode.AT_LEAST_ONCE);
         checkpointConfig.setCheckpointingMode(CheckpointingMode.EXACTLY_ONCE);
         checkpointConfig.setCheckpointInterval(1*1000L);
         checkpointConfig.setCheckpointTimeout(20*1000L);
         //设置同时可能正在进行的检查点尝试的最大次数。如果该值为n，则在当前有n个检查点尝试时不会触发检查点。
         // 对于要触发的下一个检查点，必须前面的一次检查点尝试需要完成或过期。
-        checkpointConfig.setMaxConcurrentCheckpoints(4);
+        checkpointConfig.setMaxConcurrentCheckpoints(1);
         checkpointConfig.setMinPauseBetweenCheckpoints(500L);
 //        checkpointConfig.setPreferCheckpointForRecovery(true);
         //这定义了在整个作业发生故障转移之前，可以容忍多少个连续检查点故障。
@@ -75,7 +76,16 @@ public class CheckpointTest {
         //这里虽然设置的是5，但是setMaxConcurrentCheckpoints设置的为4，当达到最大值5的时候，也不会立马重启任务，会等待已触发的cp,全部失败才认为任务失败重启
         checkpointConfig.setTolerableCheckpointFailureNumber(5);
 //        checkpointConfig.setTolerableCheckpointFailureNumber(0);
-//        checkpointConfig.enableUnalignedCheckpoints();
+
+        //如果CheckpointingMode为AT_LEAST_ONCE该设置是不生效的，只能在EXACTLY_ONCE的模式下使用
+        //相关代码在StreamingJobGraphGenerator.java的preValidate()里，如下：
+        //if (checkpointConfig.isUnalignedCheckpointsEnabled()
+        //                && getCheckpointingMode(checkpointConfig) != CheckpointingMode.EXACTLY_ONCE) {
+        //            LOG.warn("Unaligned checkpoints can only be used with checkpointing mode EXACTLY_ONCE");
+        //            checkpointConfig.enableUnalignedCheckpoints(false);
+        //        }
+        //设置报错：maxConcurrentCheckpoints can't be > 1 if UnalignedCheckpoints enabled
+        checkpointConfig.enableUnalignedCheckpoints();
 
 //        env.setRestartStrategy(RestartStrategies.fixedDelayRestart(3,10000L));
         env.setRestartStrategy(RestartStrategies.failureRateRestart(5, Time.minutes(5),Time.seconds(10)));
@@ -145,9 +155,9 @@ class TempChangeAlert1 extends RichFlatMapFunction<SensorReading,Tuple3<String,D
     @Override
     public void notifyCheckpointComplete(long checkpointId) throws Exception {
         System.out.println("...start complete:"+checkpointId);
-        while (true){
+        /*while (true){
             Thread.sleep(10000000000L);
-        }
+        }*/
     }
 
     @Override

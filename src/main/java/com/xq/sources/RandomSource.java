@@ -20,9 +20,16 @@ import java.util.Random;
 
 public class RandomSource extends RichSourceFunction<SensorReading> implements CheckpointedFunction, CheckpointListener, ProcessingTimeCallback {
     private boolean isCancel = false;
-
+    private boolean isPrint = true;
     private long count = 0L;
     private transient ListState<Long> checkpointedCount;
+
+    public RandomSource() {
+    }
+
+    public RandomSource(boolean isPrint) {
+        this.isPrint = isPrint;
+    }
 
     @Override
     public void open(Configuration parameters) throws Exception {
@@ -47,8 +54,10 @@ public class RandomSource extends RichSourceFunction<SensorReading> implements C
             }
             final long currentTimeMillis = System.currentTimeMillis();
             map.forEach((k, v) -> {
-                System.out.println(k+":"+v);
-                //在做checkpoint时，状态的修改要做到同步，负责状态可能会有问题。
+                if (isPrint) {
+                    System.out.println(k+":"+v);
+                }
+                //在做checkpoint时，状态的修改要做到同步，否则状态可能会有问题。
                 synchronized (sourceContext.getCheckpointLock()) {
                     sourceContext.collect(new SensorReading(k.toString(), currentTimeMillis, v));
                     count++;

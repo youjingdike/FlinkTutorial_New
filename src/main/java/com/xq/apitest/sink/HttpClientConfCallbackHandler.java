@@ -1,5 +1,5 @@
 
-package com.xq.apitest.sinktest;
+package com.xq.apitest.sink;
 
 import org.apache.http.auth.AuthSchemeProvider;
 import org.apache.http.auth.AuthScope;

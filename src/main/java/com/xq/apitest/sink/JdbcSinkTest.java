@@ -1,11 +1,9 @@
-package com.xq.apitest.sinktest;
+package com.xq.apitest.sink;
 
 import com.xq.apitest.pojo.SensorReading;
 import com.xq.util.DBUtil;
 import org.apache.flink.api.common.ExecutionConfig;
 import org.apache.flink.api.common.functions.MapFunction;
-import org.apache.flink.api.common.typeinfo.TypeHint;
-import org.apache.flink.api.common.typeutils.TypeSerializer;
 import org.apache.flink.api.common.typeutils.base.VoidSerializer;
 import org.apache.flink.api.java.typeutils.runtime.kryo.KryoSerializer;
 import org.apache.flink.configuration.Configuration;

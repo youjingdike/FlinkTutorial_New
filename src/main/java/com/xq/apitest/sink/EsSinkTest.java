@@ -1,4 +1,4 @@
-package com.xq.apitest.sinktest;
+package com.xq.apitest.sink;
 
 import com.xq.apitest.pojo.SensorReading;
 import org.apache.flink.api.common.functions.MapFunction;
@@ -12,12 +12,8 @@ import org.apache.flink.streaming.connectors.elasticsearch.ElasticsearchSinkFunc
 import org.apache.flink.streaming.connectors.elasticsearch.RequestIndexer;
 import org.apache.flink.streaming.connectors.elasticsearch6.ElasticsearchSink;
 import org.apache.flink.streaming.connectors.elasticsearch6.RestClientFactory;
-import org.apache.http.Header;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthSchemeProvider;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.KerberosCredentials;
-import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.config.AuthSchemes;
 import org.apache.http.config.Lookup;
@@ -27,14 +23,9 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.Requests;
-import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
-import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.VersionType;
-import org.ietf.jgss.GSSCredential;
-import sun.security.jgss.GSSCredentialImpl;
 import sun.security.jgss.GSSManagerImpl;
-import sun.security.jgss.krb5.Krb5InitCredential;
 
 import java.util.ArrayList;
 import java.util.HashMap;

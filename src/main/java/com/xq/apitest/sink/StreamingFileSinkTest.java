@@ -1,11 +1,10 @@
-package com.xq.apitest.sinktest;
+package com.xq.apitest.sink;
 
 import com.xq.apitest.pojo.SensorReading;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.serialization.SimpleStringEncoder;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.formats.parquet.avro.ParquetAvroWriters;
-import org.apache.flink.runtime.state.filesystem.FsStateBackend;
 import org.apache.flink.runtime.state.hashmap.HashMapStateBackend;
 import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
@@ -19,7 +18,6 @@ import org.apache.flink.streaming.api.functions.sink.filesystem.rollingpolicies.
 import org.apache.flink.streaming.api.functions.source.RichSourceFunction;
 import org.apache.flink.types.Row;
 
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;

@@ -1,4 +1,4 @@
-package com.xq.apitest.sinktest;
+package com.xq.apitest.sink;
 
 import com.xq.apitest.pojo.SensorReading;
 import org.apache.flink.api.common.functions.MapFunction;
