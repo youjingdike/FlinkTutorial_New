@@ -163,6 +163,9 @@ class TempChangeAlert1 extends RichFlatMapFunction<SensorReading,Tuple3<String,D
     @Override
     public void snapshotState(FunctionSnapshotContext context) throws Exception {
         System.out.println("...start snapshot:"+context.getCheckpointId());
+        while (true){
+//            Thread.sleep(10000000000L);
+        }
     }
 
     @Override

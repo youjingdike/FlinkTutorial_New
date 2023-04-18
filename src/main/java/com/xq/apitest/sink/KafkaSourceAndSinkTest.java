@@ -31,12 +31,12 @@ public class KafkaSourceAndSinkTest {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(conf);
         env.setParallelism(1);
 
-        Properties properties = new Properties();
+        /*Properties properties = new Properties();
         properties.setProperty("bootstrap.servers", "node102:9092");
         properties.setProperty("group.id", "consumer-group");
         properties.setProperty("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
         properties.setProperty("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
-        properties.setProperty("auto.offset.reset", "latest");
+        properties.setProperty("auto.offset.reset", "latest");*/
 //        properties.setProperty("auto.offset.reset", "earliest");
 // 从文件读取数据
 //        DataStreamSource<String> inputStream = env.readTextFile("D:\\code\\FlinkTutorial_1.10_New\\src\\main\\resources\\sensor.txt");
